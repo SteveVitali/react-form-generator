@@ -410,8 +410,10 @@ var FormGeneratorForm = React.createClass({
 
       var arrayParentNode = context.refs[fieldRef];
 
+      // We need to do this to account for cases where there are
+      // embedded object arrays, since, for example, we could have
+      // a ref to 'object_field.field1', but not to 'object_field'
       var refs = _.keys(arrayParentNode.refs);
-
       var hasRef = function(ref) {
         return _.reduce(refs, function(memo, r) {
           return memo || r.indexOf(ref) !== -1;
@@ -420,10 +422,10 @@ var FormGeneratorForm = React.createClass({
 
       for (var subField in fieldSchema) {
         var count = 0;
-        var fieldPath = field + '-' + count + '.' + subField;
+        var fieldPath = fieldRef + '-' + count + '.' + subField;
         while (hasRef(fieldPath)) {
           parseField(fieldPath, arrayParentNode);
-          fieldPath = field + '-' + (++count) + '.' + subField;
+          fieldPath = fieldRef + '-' + (++count) + '.' + subField;
         }
       }
     };
