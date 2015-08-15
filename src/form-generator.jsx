@@ -1,4 +1,13 @@
 var FormGenerator = {
+  /**
+   * Generate a set of input fields based on a form schema.
+   * This is the main function that gets called externally
+   * when a form is getting generated.
+   * @param  {Schema}  schema     The mongoose-esque form schema
+   * @param  {Boolean} isEmbedded Whether the form is embedded or not
+   * @return {FormGeneratorForm} If isEmbedded
+   * @return {Array of form inputs} If !isEmbedded
+   */
   generate: function(schema, isEmbedded) {
     var fields = [];
     for (var fieldName in schema) {
@@ -15,6 +24,7 @@ var FormGenerator = {
           fields.push(this.generateObjectField(fieldName, field));
         }
       } else {
+        // Flat field
         fields.push(this.generateFlatField(fieldName, field));
       }
     }
@@ -23,6 +33,12 @@ var FormGenerator = {
       : <FormGeneratorForm schema={schema}/>;
   },
 
+  /**
+   * Generate a flat field based on its name and type data
+   * @param  {String} name  The name (ref) of the field
+   * @param  {Object} field The Field object
+   * @return {JSX}          A JSX representation of the field
+   */
   generateFlatField: function(name, field) {
     if (field.type === String || field.type === Number) {
       if (field.enum) {
@@ -55,6 +71,12 @@ var FormGenerator = {
     }
   },
 
+  /**
+   * Generate an array field based on its name and type data
+   * @param  {String} name  The name (ref) of the array field
+   * @param  {Object} fieldSchema Array with one object, the array Field object
+   * @return {ArrayField} A JSX ArrayField representation of the field
+   */
   generateArrayField: function(name, fieldSchema) {
     var schema = fieldSchema.type[0];
     return (
@@ -65,6 +87,12 @@ var FormGenerator = {
     );
   },
 
+  /**
+   * Generate an object field based on its name and type data
+   * @param  {String} name  The name (ref) of the object field
+   * @param  {Object} field The form-schema of the object-field
+   * @return {JSX}          A JSX representation of the object field
+   */
   generateObjectField: function(name, fieldSchema) {
     // Update schema to use dot notation on form field refs
     // to indicate the object-embedded-ness during form construction
@@ -80,7 +108,7 @@ var FormGenerator = {
         {embeddedFields}
       </ReactBootstrap.Panel>
     );
-  },
+  }
 };
 
 var ArrayField = React.createClass({
