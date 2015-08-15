@@ -56,22 +56,50 @@ var FormGenerator = React.createClass({
     throw 'Array fields unimplemented';
   },
 
-  render: function() {
-    var schema = this.props.schema;
+  generateObjectField: function(name, fieldSchema) {
+    // Update schema to use dot notation on form field refs
+    // to indicate the object-embedded-ness during form construction
+    var embeddedSchema = {};
+    // Note: fieldSchema.type is itself a schema
+    for (var field in fieldSchema.type) {
+      var embeddedAccessor = name + '.' + field;
+      embeddedSchema[embeddedAccessor] = fieldSchema.type[field];
+    }
+    var embeddedFields = this.generate(embeddedSchema);
+    return (
+      <ReactBootstrap.Panel header={fieldSchema.label}>
+        {embeddedFields}
+      </ReactBootstrap.Panel>
+    );
+  },
+
+  generate: function(schema) {
     var fields = [];
     for (var fieldName in schema) {
       var field = schema[fieldName];
 
       if (typeof field.type === 'object') {
+        // Validate that it's an array
         if (field.type.length && field.type.length === 1) {
+          // Array of native type like [String]
+          // or [{ object: type, like: this }]
           fields.push(this.generateArrayField(fieldName, field));
         } else {
-          throw 'Embedded objects not supported';
+          // Regular { embedded: object }
+          fields.push(this.generateObjectField(fieldName, field));
         }
       } else {
         fields.push(this.generateFlatField(fieldName, field));
       }
     }
-    return <form>{fields}</form>;
+    return fields;
+  },
+
+  render: function() {
+    return (
+      <form>
+        {this.generate(this.props.schema)}
+      </form>
+    );
   }
 });
