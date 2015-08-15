@@ -4,10 +4,11 @@ var FormGenerator = {
    * and gives it a particular ref for access later
    * @param  {Object} schema The mongoose-esque form schema
    * @param  {String} ref    The ref of the resultant JSX form
+   * @param  {Function} onSubmit What do do on submission
    * @return {JSX} The FormGeneratorForm for this schema
    */
-  create: function(schema, ref) {
-    return <FormGeneratorForm schema={schema} ref={ref}/>;
+  create: function(schema, ref, onSubmit) {
+    return <FormGeneratorForm schema={schema} ref={ref} onSubmit={onSubmit}/>;
   },
 
   /**
@@ -215,7 +216,8 @@ var ArrayField = React.createClass({
 
 var FormGeneratorForm = React.createClass({
   propTypes: {
-    schema: React.PropTypes.object.isRequired
+    schema: React.PropTypes.object.isRequired,
+    onSubmit: React.PropTypes.func.isRequired
   },
 
   getDefaultProps: function() {
@@ -241,19 +243,72 @@ var FormGeneratorForm = React.createClass({
     var parsedFormData = {};
 
     var getRawFormData = function(ref) {
+      console.log('trying to find dom node for ref', ref);
       var node = React.findDOMNode(that.refs[ref]);
-      console.log('found DOM node', node, 'for ref', ref);
+      console.log('found DOM node', node);
       return node.value;
     };
 
-    var parseFlatField = function(field) {
-      parsedFormData[field] = getRawFormData(field);
+    // e.g. 'welp-12.welp_subfield.womp-4' => welp.welp_subfield.womp
+    var getFieldPath = function(fieldString) {
+      // This regex matches all the suffixes added to array field
+      // property names, like the '-12' in 'welp-12', the 13th
+      // element in an array called welp8
+      var arrayRegex = /([-][0-9]+)/g;
+      var cleanPath = fieldString.replace(arrayRegex, '');
+      return cleanPath.split('.');
+    };
+
+    // fieldRef is the ref to this field
+    var parseFlatField = function(fieldRef) {
+      console.log('Parsing flat field with ref', fieldRef);
+      // Use rawFormData to get the eventual value we store
+      var fieldValue = getRawFormData(fieldRef);
+
+      var splitRegex = /([-][0-9]+)?[.]/g;
+      // e.g. 'welp-1.womp.welp-2.wilp'
+      //   => ["welp", "-1", "womp", undefined, "welp", "-2", "wilp"]
+      var splitComponents = fieldRef.split(splitRegex);
+      var getTokenAccessor = function(token) {
+        return isNaN(token)
+          ? token
+          : (-1 * Number(token));
+      };
+      // This will be where we store the eventual fieldValue
+      var targetObject = parsedFormData;
+
+      var count = 0;
+      while (++count < splitComponents.length) {
+        var token = getTokenAccessor(splitComponents[count]);
+        if (token === undefined) { continue; }
+        // Token can be an array accessor or a field name
+        // Javascript treats them both the same though :)
+        if (count === splitComponents.length - 1) {
+          // Set the field and return
+          return (targetObject[token] = fieldValue);
+        } else {
+          // If token is an array index, make sure array exists
+          // and is big enough
+          if (!isNaN(token)) {
+            if (!targetObject.length) {
+              targetObject[token] = [];
+            }
+            while (targetObject.length < token) {
+              // In 99.99% of cases, this should just add
+              // one dummy object so the array is long enough
+              console.log('token', token);
+              targetObject.push({});
+            }
+          }
+          targetObject = targetObject[token];
+        }
+      }
     };
 
     // This converts the array-form-field-ref naming scheme of
     // field-0, field-1, field-2, etc. into an actual array
     // in the parsedFormData object
-    var parseFlatArrayField = function(field) {
+    var parseFlatArrayField = function(fieldRef) {
       var count = 0;
       var value = getRawFormData(field + '-' + count);
       while (value !== undefined) {
@@ -261,6 +316,14 @@ var FormGeneratorForm = React.createClass({
           parsedFormData[field] = [];
         }
         parsedFormData[field].push(value);
+      }
+
+      console.log('Parsing flat array field with ref', fieldRef);
+      var count = 0;
+      var fieldPath = fieldRef + '-' + count;
+      while (React.findDOMNode(that.refs[fieldPath])) {
+        parseFlatField(fieldPath);
+        fieldPath = field + '-' + (++count);
       }
     };
 
@@ -272,14 +335,20 @@ var FormGeneratorForm = React.createClass({
       throw 'Unimplemented';
     };
 
-    // baseField is the top-level field from the form schema
-    // whereas accumulatorField represents the fields actual
-    // name attribute in the JSX form
-    // e.g. array-of-objects field could be called 'things'
+    // accumulatorField represents the field's actual
+    // nref attribute in the JSX form
+    // e.g. array of objects field could be called 'things'
     // whereas individual things would have name attributes
     // like 'things.thing_attribute-0'
-    var parseField = function(baseField, accumulatorField) {
-      var field = schema[accumulatorField];
+    var parseField = function(accumulatorField) {
+      var fieldPath = getFieldPath(accumulatorField);
+      // Dot into the schema field, which may or may not
+      // be deeply nested in an object
+      var field = schema[fieldPath[0]];
+      var count = 0;
+      while (++count < fieldPath.length) {
+        field = field[fieldPath[count]];
+      }
       // Native type
       if (typeof field.type === 'function') {
         parseFlatField(accumulatorField);
@@ -290,30 +359,31 @@ var FormGeneratorForm = React.createClass({
           if (field.type.length === 1) {
             // Array of native types
             if (typeof field.type[0] === 'function') {
-              parseFlatArrayField(fieldKey);
+              parseFlatArrayField(accumulatorField);
             }
             // Array of objects
             else if (typeof field.type[0] === 'object') {
-              parseObjectArrayField(fieldKey);
+              parseObjectArrayField(accumulatorField);
             }
             else {
               throw 'Parse Error: Unsupported schema';
             }
           }
-          // Invalid schema
           else {
             throw 'Parse Error: Invalid schema';
           }
         }
         // Regular object field
         else {
-          parseObjectField(fieldKey);
+          for (var subField in field) {
+            parseField(accumulatorField + '.' + subField);
+          }
         }
       }
     };
     // Parse the fields
     for (var field in schema) {
-      parseField(field, field);
+      parseField(field);
     }
     return parsedFormData;
   },
@@ -326,6 +396,9 @@ var FormGeneratorForm = React.createClass({
     return (
       <form>
         {FormGenerator.generate(this.props.schema)}
+        <ReactBootstrap.Button bSize='large' onClick={this.props.onSubmit}>
+          Submit
+        </ReactBootstrap.Button>
       </form>
     );
   }

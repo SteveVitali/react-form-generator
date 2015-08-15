@@ -10,6 +10,7 @@ var Example = React.createClass({
   },
 
   render: function() {
+    var that = this;
     return FormGenerator.create({
       flat_field: {
         type: String,
@@ -86,6 +87,9 @@ var Example = React.createClass({
         }],
         label: 'Object Array'
       }
+    }, 'myFormRef', function() {
+      console.log('Submit clicked!');
+      console.log('Parsing form!', that.refs.myFormRef.parse());
     });
   }
 });
