@@ -265,10 +265,16 @@ var FormGeneratorForm = React.createClass({
       // Use rawFormData to get the eventual value we store
       var fieldValue = getRawFormData(fieldRef);
 
-      var splitRegex = /([-][0-9]+)?[.]/g;
+      var splitRegex = /([-][0-9]+)[.]?/g;
       // e.g. 'welp-1.womp.welp-2.wilp'
       //   => ["welp", "-1", "womp", undefined, "welp", "-2", "wilp"]
-      var splitComponents = fieldRef.split(splitRegex);
+      var splitComponents = _.filter(
+        fieldRef.split(splitRegex),
+        function(token) {
+          return token !== undefined && token !== '';
+        }
+      );
+      console.log('tokenized', fieldRef, 'into', splitComponents);
       var getTokenAccessor = function(token) {
         return isNaN(token)
           ? token
@@ -277,9 +283,10 @@ var FormGeneratorForm = React.createClass({
       // This will be where we store the eventual fieldValue
       var targetObject = parsedFormData;
 
-      var count = 0;
+      var count = -1;
       while (++count < splitComponents.length) {
         var token = getTokenAccessor(splitComponents[count]);
+        console.log('TOKEN'+count, token);
         if (token === undefined) { continue; }
         // Token can be an array accessor or a field name
         // Javascript treats them both the same though :)
@@ -289,15 +296,21 @@ var FormGeneratorForm = React.createClass({
         } else {
           // If token is an array index, make sure array exists
           // and is big enough
-          if (!isNaN(token)) {
-            if (!targetObject.length) {
+          var nextToken = getTokenAccessor(splitComponents[count + 1]);
+          if (!isNaN(nextToken)) {
+            if (!targetObject[token] || !targetObject[token].length) {
+              console.log('initializing array called', token);
               targetObject[token] = [];
             }
-            while (targetObject.length < token) {
+            while (targetObject.length < nextToken) {
               // In 99.99% of cases, this should just add
               // one dummy object so the array is long enough
-              console.log('token', token);
               targetObject.push({});
+            }
+          } else {
+            if (!targetObject[token]) {
+              console.log('initializing object at field', token);
+              targetObject[token] = {};
             }
           }
           targetObject = targetObject[token];
