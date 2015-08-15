@@ -49,22 +49,21 @@ var FormGenerator = {
     if (field.type === String || field.type === Number) {
       if (field.enum) {
         return (
-          <ReactBootstrap.Input
+          <FlatField
             type='select'
             ref={name}
             label={field.label || ''}
-            placeholder={field.enum[0] || ''}>
-            { _.map(field.enum, function(val) {
+            placeholder={field.enum[0] || ''}
+            children={ _.map(field.enum, function(val) {
                 return (
                   <option value={val}>{val}</option>
                 );
               })
-            }
-          </ReactBootstrap.Input>
+            }/>
         );
       } else {
         return (
-          <ReactBootstrap.Input
+          <FlatField
             type='text'
             ref={name}
             label={field.label}
@@ -88,6 +87,7 @@ var FormGenerator = {
     return (
       <ArrayField
         ref={name}
+        name={name}
         label={fieldSchema.label}
         schema={schema}/>
     );
@@ -117,9 +117,57 @@ var FormGenerator = {
   }
 };
 
+var FlatField = React.createClass({
+  propTypes: {
+    // text or select
+    type: React.PropTypes.string,
+    name: React.PropTypes.string.isRequired,
+    label: React.PropTypes.string,
+    placeholder: React.PropTypes.string,
+    children: React.PropTypes.array
+  },
+
+  getDefaultProps: function() {
+    return {
+      type: 'text',
+      label: '',
+      placeholder: '',
+      children: []
+    };
+  },
+
+  getInitialState: function() {
+    return {
+      value: ''
+    };
+  },
+
+  onChange: function(e) {
+    this.setState({
+      value: e.target.value
+    });
+  },
+
+  getValue: function() {
+    return this.state.value;
+  },
+
+  render: function() {
+    return (
+      <ReactBootstrap.Input
+        type={this.props.type}
+        label={this.props.label}
+        placeholder={this.props.placeholder}
+        onChange={this.onChange}>
+        {this.props.children}
+      </ReactBootstrap.Input>
+    );
+  }
+});
+
 var ArrayField = React.createClass({
   propTypes: {
-    ref: React.PropTypes.string.isRequired,
+    name: React.PropTypes.string.isRequired,
     label: React.PropTypes.string,
     schema: React.PropTypes.oneOfType([
       React.PropTypes.object,
@@ -242,11 +290,13 @@ var FormGeneratorForm = React.createClass({
     // object in the same shape as the schema, with data populated
     var parsedFormData = {};
 
+    var getValueFromRef = function(contextNode, ref) {
+      var node = contextNode.refs[ref];
+      return node ? node.getValue() : undefined;
+    };
+
     var getRawFormData = function(ref) {
-      console.log('trying to find dom node for ref', ref);
-      var node = React.findDOMNode(that.refs[ref]);
-      console.log('found DOM node', node);
-      return node.value;
+      return getValueFromRef(that, ref);
     };
 
     // e.g. 'welp-12.welp_subfield.womp-4' => welp.welp_subfield.womp
@@ -326,21 +376,16 @@ var FormGeneratorForm = React.createClass({
     // field-0, field-1, field-2, etc. into an actual array
     // in the parsedFormData object
     var parseFlatArrayField = function(fieldRef) {
-      var count = 0;
-      var value = getRawFormData(field + '-' + count);
-      while (value !== undefined) {
-        if (!parsedFormData[field]) {
-          parsedFormData[field] = [];
-        }
-        parsedFormData[field].push(value);
-      }
-
       console.log('Parsing flat array field with ref', fieldRef);
       var count = 0;
-      var fieldPath = fieldRef + '-' + count;
-      while (React.findDOMNode(that.refs[fieldPath])) {
-        parseFlatField(fieldPath);
-        fieldPath = field + '-' + (++count);
+      var arrayParentNode = that.refs[fieldRef];
+      var value = getValueFromRef(arrayParentNode, fieldRef + '-' + count);
+      while (value !== undefined) {
+        if (!parsedFormData[fieldRef]) {
+          parsedFormData[fieldRef] = [];
+        }
+        parsedFormData[fieldRef].push(value);
+        value = getValueFromRef(arrayParentNode, fieldRef + '-' + (++count));
       }
     };
 
