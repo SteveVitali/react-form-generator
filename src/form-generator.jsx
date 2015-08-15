@@ -406,28 +406,24 @@ var FormGeneratorForm = React.createClass({
     };
 
     var parseObjectArrayField = function(fieldRef, fieldSchema, context) {
+      console.log('Parsing object array field', fieldRef);
+
       var arrayParentNode = context.refs[fieldRef];
-      console.log('Parsing object array with fieldRef', fieldRef, 'and parent node', arrayParentNode);
+
+      var refs = _.keys(arrayParentNode.refs);
+
+      var hasRef = function(ref) {
+        return _.reduce(refs, function(memo, r) {
+          return memo || r.indexOf(ref) !== -1;
+        }, false);
+      };
+
       for (var subField in fieldSchema) {
         var count = 0;
-        var fieldPath = fieldRef + '-' + count + '.' + subField;
-        console.log('start getting all the subfields', subField);
-
-        if (typeof fieldSchema[subField].type === 'function') {
-          console.log('does arrayParentNode has this subfield?', fieldPath, arrayParentNode)        
-          while (arrayParentNode.refs[fieldPath]) {
-            console.log('yes, subfield path', fieldPath);
-            parseField(fieldPath, arrayParentNode);
-            fieldPath = fieldRef + '-' + (++count) + '.' + subField;
-          }
-          console.log('done with subfield', subField);
-        }
-        else if (typeof fieldSchema[subField].type === 'object') {
-          if (fieldSchema[subField].type.length) {
-            throw 'Arrays of arrays unsupported';
-          } else {
-            // Regular object
-          }
+        var fieldPath = field + '-' + count + '.' + subField;
+        while (hasRef(fieldPath)) {
+          parseField(fieldPath, arrayParentNode);
+          fieldPath = field + '-' + (++count) + '.' + subField;
         }
       }
     };
