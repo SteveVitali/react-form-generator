@@ -10,7 +10,7 @@ var Example = React.createClass({
   },
 
   render: function() {
-    return <FormGenerator schema={{
+    return FormGenerator.generate({
       flat_field: {
         type: String,
         label: 'Flat Field'
@@ -50,7 +50,42 @@ var Example = React.createClass({
           }
         },
         label: 'Simple Object Field'
+      },
+      array_field: {
+        type: [String],
+        label: 'Array of Strings'
+      },
+      object_array_field: {
+        type: [{
+          flat_field: {
+            type: String,
+            label: 'Flat Object Array Field'
+          },
+          object_field: {
+            type: {
+              object_array_object_field1: {
+                type: String,
+                label: 'Flat Object-Array Object-Field'
+              },
+              object_array_array_field: {
+                type: [{
+                  object_array_object_array_field1: {
+                    type: String,
+                    label: 'Object-Array Object-Array Field 1'
+                  },
+                  object_array_object_array_field2: {
+                    type: String,
+                    label: 'Object-Array Object-Array Field 2'
+                  }
+                }],
+                label: 'Object-Array Object-Array Field'
+              }
+            },
+            label: 'Object Array Object Field'
+          }
+        }],
+        label: 'Object Array'
       }
-    }}/>;
+    });
   }
 });
