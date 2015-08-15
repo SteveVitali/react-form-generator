@@ -327,6 +327,7 @@ var FormGeneratorForm = React.createClass({
       console.log('Parsing flat field with ref', fieldRef);
       // Use rawFormData to get the eventual value we store
       var fieldValue = getValueFromRef(context, fieldRef);
+      fieldValue = fieldValue === '' ? undefined : fieldValue;
 
       // e.g. 'welp-1.womp.welp-2.wilp'
       //   => ["welp", "-1", "womp", undefined, "welp", "-2", "wilp"]
@@ -396,6 +397,7 @@ var FormGeneratorForm = React.createClass({
         var newRef = fieldRef + '-' + (++count);
         value = getValueFromRef(arrayParentNode, newRef);
       }
+      parsedFormData[fieldRef] = _.compact(parsedFormData[fieldRef]);
     };
 
     var parseObjectField = function(field, fieldSchema, context) {
