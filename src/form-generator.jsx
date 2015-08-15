@@ -249,16 +249,22 @@ var ArrayField = React.createClass({
         );
       }
     });
+    var btnStyle = {
+      marginTop: '-14px',
+      marginBottom: '10px'
+    };
     return (
       <span>
         {elements}
         <ReactBootstrap.Button
+          style={btnStyle}
           bsStyle='primary'
           bsSize='xsmall'
           onClick={this.addField}>
           Add
         </ReactBootstrap.Button>
         <ReactBootstrap.Button
+          style={btnStyle}
           bsStyle='primary'
           bsSize='xsmall'
           onClick={this.removeField}>
@@ -502,6 +508,7 @@ var FormGeneratorForm = React.createClass({
     return (
       <form>
         {FormGenerator.generate(this.props.schema)}
+        <br/>
         <ReactBootstrap.Button bSize='large' onClick={this.props.onSubmit}>
           Submit
         </ReactBootstrap.Button>
