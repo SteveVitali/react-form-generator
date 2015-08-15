@@ -10,7 +10,7 @@ var Example = React.createClass({
   },
 
   render: function() {
-    return FormGenerator.generate({
+    return FormGenerator.create({
       flat_field: {
         type: String,
         label: 'Flat Field'

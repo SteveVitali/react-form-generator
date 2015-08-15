@@ -1,14 +1,21 @@
 var FormGenerator = {
   /**
-   * Generate a set of input fields based on a form schema.
-   * This is the main function that gets called externally
-   * when a form is getting generated.
-   * @param  {Schema}  schema     The mongoose-esque form schema
-   * @param  {Boolean} isEmbedded Whether the form is embedded or not
-   * @return {FormGeneratorForm} If isEmbedded
-   * @return {Array of form inputs} If !isEmbedded
+   * This creates a new FormGenerator form based on the schema
+   * and gives it a particular ref for access later
+   * @param  {Object} schema The mongoose-esque form schema
+   * @param  {String} ref    The ref of the resultant JSX form
+   * @return {JSX} The FormGeneratorForm for this schema
    */
-  generate: function(schema, isEmbedded) {
+  create: function(schema, ref) {
+    return <FormGeneratorForm schema={schema} ref={ref}/>;
+  },
+
+  /**
+   * Generate a set of input fields based on a form schema.
+   * @param  {Schema}  schema     The mongoose-esque form schema
+   * @return {Array} An array of JSX Input fields representing the schema
+   */
+  generate: function(schema) {
     var fields = [];
     for (var fieldName in schema) {
       var field = schema[fieldName];
@@ -28,9 +35,7 @@ var FormGenerator = {
         fields.push(this.generateFlatField(fieldName, field));
       }
     }
-    return isEmbedded
-      ? fields
-      : <FormGeneratorForm schema={schema}/>;
+    return fields;
   },
 
   /**
@@ -102,7 +107,7 @@ var FormGenerator = {
       var embeddedAccessor = name + '.' + field;
       embeddedSchema[embeddedAccessor] = fieldSchema.type[field];
     }
-    var embeddedFields = this.generate(embeddedSchema, true);
+    var embeddedFields = this.generate(embeddedSchema);
     return (
       <ReactBootstrap.Panel header={fieldSchema.label}>
         {embeddedFields}
@@ -166,9 +171,7 @@ var ArrayField = React.createClass({
             var objectSchema = {};
             var customName = that.props.name + '.' + field + '-' + index;
             objectSchema[customName] = that.props.schema[field];
-            var formField = (
-              FormGenerator.generate(objectSchema, true)
-            );
+            var formField = FormGenerator.generate(objectSchema);
            objectFields.push(formField);
           }
           elements.push(
@@ -235,7 +238,7 @@ var FormGeneratorForm = React.createClass({
   render: function() {
     return (
       <form>
-        {FormGenerator.generate(this.props.schema, true)}
+        {FormGenerator.generate(this.props.schema)}
       </form>
     );
   }
