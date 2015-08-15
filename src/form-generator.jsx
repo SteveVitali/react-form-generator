@@ -227,8 +227,95 @@ var FormGeneratorForm = React.createClass({
     };
   },
 
+  /**
+   * Extract from the form data an object that is formatted
+   * in the same way as the original form schema
+   * @return {Object} An object representing the form data
+   */
   parse: function() {
-    throw 'Unimplemented';
+    var that = this;
+    var schema = this.props.schema;
+    // All the parse functions below will populate this object
+    // with the correct form data and in the end build up an
+    // object in the same shape as the schema, with data populated
+    var parsedFormData = {};
+
+    var getRawFormData = function(ref) {
+      var node = React.findDOMNode(that.refs[ref]);
+      console.log('found DOM node', node, 'for ref', ref);
+      return node.value;
+    };
+
+    var parseFlatField = function(field) {
+      parsedFormData[field] = getRawFormData(field);
+    };
+
+    // This converts the array-form-field-ref naming scheme of
+    // field-0, field-1, field-2, etc. into an actual array
+    // in the parsedFormData object
+    var parseFlatArrayField = function(field) {
+      var count = 0;
+      var value = getRawFormData(field + '-' + count);
+      while (value !== undefined) {
+        if (!parsedFormData[field]) {
+          parsedFormData[field] = [];
+        }
+        parsedFormData[field].push(value);
+      }
+    };
+
+    var parseObjectField = function(field) {
+      throw 'Unimplemented';
+    };
+
+    var parseObjectArrayField = function(field) {
+      throw 'Unimplemented';
+    };
+
+    // baseField is the top-level field from the form schema
+    // whereas accumulatorField represents the fields actual
+    // name attribute in the JSX form
+    // e.g. array-of-objects field could be called 'things'
+    // whereas individual things would have name attributes
+    // like 'things.thing_attribute-0'
+    var parseField = function(baseField, accumulatorField) {
+      var field = schema[accumulatorField];
+      // Native type
+      if (typeof field.type === 'function') {
+        parseFlatField(accumulatorField);
+      }
+      else if (typeof field.type === 'object') {
+        if (field.type.length) {
+          // Array field
+          if (field.type.length === 1) {
+            // Array of native types
+            if (typeof field.type[0] === 'function') {
+              parseFlatArrayField(fieldKey);
+            }
+            // Array of objects
+            else if (typeof field.type[0] === 'object') {
+              parseObjectArrayField(fieldKey);
+            }
+            else {
+              throw 'Parse Error: Unsupported schema';
+            }
+          }
+          // Invalid schema
+          else {
+            throw 'Parse Error: Invalid schema';
+          }
+        }
+        // Regular object field
+        else {
+          parseObjectField(fieldKey);
+        }
+      }
+    };
+    // Parse the fields
+    for (var field in schema) {
+      parseField(field, field);
+    }
+    return parsedFormData;
   },
 
   validate: function() {
