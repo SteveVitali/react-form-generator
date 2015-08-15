@@ -67,7 +67,8 @@ var FormGenerator = {
               })
             }/>
         );
-      } else {
+      }
+      else {
         return (
           <FlatField
             type='text'
@@ -77,8 +78,19 @@ var FormGenerator = {
         );
       }
     }
+    else if (field.type === Boolean) {
+      return (
+        <FlatField
+          type='checkbox'
+          label={field.label}
+          ref={name}/>
+      );
+    }
     else if (field.type === Date) {
       throw 'Date types unimplemented';
+    }
+    else {
+      throw 'Unsupported type';
     }
   },
 
@@ -156,7 +168,9 @@ var FlatField = React.createClass({
   },
 
   getValue: function() {
-    return this.state.value;
+    return this.props.type === 'checkbox'
+      ? (this.state.value === 'on')
+      : this.state.value;
   },
 
   render: function() {
@@ -333,7 +347,10 @@ var FormGeneratorForm = React.createClass({
       console.log('Parsing flat field with ref', fieldRef);
       // Use rawFormData to get the eventual value we store
       var fieldValue = getValueFromRef(context, fieldRef);
-      fieldValue = fieldValue === '' ? undefined : fieldValue;
+
+      // Don't bother constructing the field in the results object
+      // if we're just going to put an emptystring there
+      if (fieldValue === '') { return; }
 
       // e.g. 'welp-1.womp.welp-2.wilp'
       //   => ["welp", "-1", "womp", undefined, "welp", "-2", "wilp"]

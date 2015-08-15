@@ -21,6 +21,10 @@ var Example = React.createClass({
         enum: ['', 'value 1', 'value 2', 'value 3'],
         label: 'Enum field'
       },
+      boolean_field: {
+        type: Boolean,
+        label: 'Boolean field'
+      },
       simple_object_field: {
         type: {
           embedded_field1: {
