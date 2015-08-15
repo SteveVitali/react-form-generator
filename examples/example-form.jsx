@@ -56,6 +56,19 @@ var Example = React.createClass({
         type: [String],
         label: 'Array of Strings'
       },
+      simple_object_array: {
+        type: [{
+          obj_arr_field1: {
+            type: String,
+            label: 'Obj arr field 1'
+          },
+          obj_arr_field2: {
+            type: String,
+            label: 'Obj arr field 2'
+          }
+        }],
+        label: 'Simple Object Array'
+      },
       object_array_field: {
         type: [{
           flat_field: {
