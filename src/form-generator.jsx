@@ -59,7 +59,7 @@ var FormGenerator = {
             ref={name}
             label={field.label || ''}
             placeholder={field.enum[0] || ''}
-            defaultValue={field.enum[0] || ''}
+            defaultValue={field.defaultValue || field.enum[0]}
             children={ _.map(field.enum, function(val) {
                 return (
                   <option value={val}>{val}</option>
@@ -74,7 +74,8 @@ var FormGenerator = {
             type='text'
             ref={name}
             label={field.label}
-            placeholder={field.label || ''}/>
+            placeholder={field.label || ''}
+            defaultValue={field.defaultValue}/>
         );
       }
     }
@@ -83,7 +84,8 @@ var FormGenerator = {
         <FlatField
           type='checkbox'
           label={field.label}
-          ref={name}/>
+          ref={name}
+          defaultValue={field.defaultValue}/>
       );
     }
     else if (field.type === Date) {
@@ -143,7 +145,8 @@ var FlatField = React.createClass({
     label: React.PropTypes.string,
     placeholder: React.PropTypes.string,
     children: React.PropTypes.array,
-    defaultValue: React.PropTypes.string
+    defaultValue: React.PropTypes.string,
+    validate: React.PropTypes.func
   },
 
   getDefaultProps: function() {
@@ -162,24 +165,39 @@ var FlatField = React.createClass({
   },
 
   onChange: function(e) {
+    // If checkbox type, toggle value;
+    // otherwise, use the event target value
+    var newValue = this.props.type === 'checkbox'
+      ? !this.state.value
+      : e.target.value;
+
     this.setState({
-      value: e.target.value
+      value: newValue
     });
   },
 
   getValue: function() {
-    return this.props.type === 'checkbox'
-      ? (this.state.value === 'on')
-      : this.state.value;
+    return this.state.value;
   },
 
   render: function() {
+    if (this.props.type === 'checkbox') {
+      return (
+        <ReactBootstrap.Input
+          type={this.props.type}
+          label={this.props.label}
+          placeholder={this.props.placeholder}
+          onChange={this.onChange}
+          checked={this.getValue()}/>
+      );
+    }
     return (
       <ReactBootstrap.Input
         type={this.props.type}
         label={this.props.label}
         placeholder={this.props.placeholder}
-        onChange={this.onChange}>
+        onChange={this.onChange}
+        defaultValue={this.props.defaultValue || ''}>
         {this.props.children}
       </ReactBootstrap.Input>
     );

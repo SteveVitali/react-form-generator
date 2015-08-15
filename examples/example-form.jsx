@@ -14,16 +14,19 @@ var Example = React.createClass({
     return FormGenerator.create({
       flat_field: {
         type: String,
-        label: 'Flat Field'
+        label: 'Flat Field',
+        defaultValue: 'Flat Field Default Value'
       },
       enum_field: {
         type: String,
-        enum: ['', 'value 1', 'value 2', 'value 3'],
-        label: 'Enum field'
+        enum: ['', 'value 1', 'value 2', 'value 3', 'enum default'],
+        label: 'Enum field',
+        defaultValue: 'enum default'
       },
       boolean_field: {
         type: Boolean,
-        label: 'Boolean field'
+        label: 'Boolean field',
+        defaultValue: true
       },
       simple_object_field: {
         type: {
