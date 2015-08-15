@@ -18,5 +18,11 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "dependencies": {
+    "underscore": "~1.8.3",
+    "bootstrap": "~3.3.5",
+    "react-bootstrap": "~0.24.5",
+    "react": "~0.13.3"
+  }
 }
