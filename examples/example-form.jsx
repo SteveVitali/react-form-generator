@@ -140,8 +140,10 @@ var Example = React.createClass({
     },
     'myFormRef',
     function() {
+      var myForm = that.refs.myFormRef;
       console.log('Submit clicked!');
-      console.log('Parsing form!', that.refs.myFormRef.parse());
+      console.log('Parsing form!', myForm.parse());
+      myForm.reset();
     });
   }
 });

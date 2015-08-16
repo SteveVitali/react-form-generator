@@ -1,6 +1,3 @@
-// TODO: reset form state after submission
-// TODO: hook up submit button enable to field validator results
-
 var FormGenerator = {
   /**
    * This creates a new FormGenerator form based on the schema
@@ -186,7 +183,8 @@ var FlatField = React.createClass({
       placeholder: '',
       children: [],
       validators: [],
-      onChange: function() {}
+      onChange: function() {},
+      defaultValue: ''
     };
   },
 
@@ -195,6 +193,16 @@ var FlatField = React.createClass({
       value: this.props.defaultValue || '',
       errorMessages: []
     };
+  },
+
+  componentDidMount: function() {
+    var errorMessages = this.validate(this.getValue());
+    var isValid = !errorMessages.length;
+
+    this.setState({
+      errorMessages: errorMessages
+    });
+    this.props.onChange(this.props.name, isValid);
   },
 
   validate: function(value) {
@@ -209,23 +217,11 @@ var FlatField = React.createClass({
     return !!this.validate(this.getValue()).length;
   },
 
-  componentDidMount: function() {
-    var errorMessages = this.validate(this.getValue());
-    var isValid = !errorMessages.length;
-
-    this.setState({
-      errorMessages: errorMessages
-    });
-    this.props.onChange(this.props.name, isValid);
+  getValue: function() {
+    return this.state.value;
   },
 
-  onChange: function(e) {
-    // If checkbox type, toggle value;
-    // otherwise, use the event target value
-    var newValue = this.props.type === 'checkbox'
-      ? !this.state.value
-      : e.target.value;
-
+  setValue: function(newValue) {
     var errorMessages = this.validate(newValue);
     var isValid = !errorMessages.length;
 
@@ -236,8 +232,19 @@ var FlatField = React.createClass({
     this.props.onChange(this.props.name, isValid);
   },
 
-  getValue: function() {
-    return this.state.value;
+  reset: function() {
+    console.log('Resetting node', this.props.name);
+    this.setValue(this.props.defaultValue);
+  },
+
+  onChange: function(e) {
+    // If checkbox type, toggle value;
+    // otherwise, use the event target value
+    var newValue = this.props.type === 'checkbox'
+      ? !this.state.value
+      : e.target.value;
+
+    this.setValue(newValue);
   },
 
   render: function() {
@@ -257,7 +264,7 @@ var FlatField = React.createClass({
               label={that.props.label}
               placeholder={that.props.placeholder}
               onChange={that.onChange}
-              defaultValue={that.props.defaultValue || ''}/>
+              value={that.state.value}/>
             { _.map(that.state.errorMessages, function(msg) {
                 return (
                   <span className='help-block'>
@@ -281,7 +288,7 @@ var FlatField = React.createClass({
             label={that.props.label}
             placeholder={that.props.placeholder}
             onChange={that.onChange}
-            defaultValue={that.props.defaultValue || ''}>
+            value={that.state.value}>
             {that.props.children}
           </ReactBootstrap.Input>
         );
@@ -314,6 +321,12 @@ var ArrayField = React.createClass({
       // The number of things in the array
       values: 1
     };
+  },
+
+  reset: function() {
+    this.setState({
+      values: 1
+    });
   },
 
   addField: function() {
@@ -429,6 +442,23 @@ var FormGeneratorForm = React.createClass({
       validFieldsMap: validityMap,
       isValid: isFormValid
     });
+  },
+
+  isValid: function() {
+    return this.state.isValid;
+  },
+
+  reset: function() {
+    var clearRefs = function clearRefs(contextNode, ref) {
+      var refNode = contextNode.refs[ref];
+      refNode.reset && refNode.reset();
+      for (var subRef in refNode.refs) {
+        clearRefs(refNode, subRef);
+      }
+    };
+    for (var ref in this.refs) {
+      clearRefs(this, ref);
+    }
   },
 
   /**
@@ -642,10 +672,6 @@ var FormGeneratorForm = React.createClass({
       parseField(field, that);
     }
     return parsedFormData;
-  },
-
-  validate: function() {
-    throw 'Unimplemented';
   },
 
   render: function() {
