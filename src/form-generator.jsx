@@ -1,3 +1,6 @@
+// TODO: reset form state after submission
+// TODO: hook up submit button enable to field validator results
+
 var FormGenerator = {
   /**
    * This creates a new FormGenerator form based on the schema
@@ -18,10 +21,11 @@ var FormGenerator = {
 
   /**
    * Generate a set of input fields based on a form schema.
-   * @param  {Schema}  schema     The mongoose-esque form schema
+   * @param  {Schema}   schema     The mongoose-esque form schema
+   * @param  {Function} onChange   Function to run any time a field changes
    * @return {Array} An array of JSX Input fields representing the schema
    */
-  generate: function(schema) {
+  generate: function(schema, onChange) {
     var fields = [];
     for (var fieldName in schema) {
       var field = schema[fieldName];
@@ -31,14 +35,14 @@ var FormGenerator = {
         if (field.type.length && field.type.length === 1) {
           // Array of native type like [String]
           // or [{ object: type, like: this }]
-          fields.push(this.generateArrayField(fieldName, field));
+          fields.push(this.generateArrayField(fieldName, field, onChange));
         } else {
           // Regular { embedded: object }
-          fields.push(this.generateObjectField(fieldName, field));
+          fields.push(this.generateObjectField(fieldName, field, onChange));
         }
       } else {
         // Flat field
-        fields.push(this.generateFlatField(fieldName, field));
+        fields.push(this.generateFlatField(fieldName, field, onChange));
       }
     }
     return fields;
@@ -46,11 +50,12 @@ var FormGenerator = {
 
   /**
    * Generate a flat field based on its name and type data
-   * @param  {String} name  The name (ref) of the field
-   * @param  {Object} field The Field object
-   * @return {JSX}          A JSX representation of the field
+   * @param  {String}   name     The name (ref) of the field
+   * @param  {Object}   field    The Field object
+   * @param  {Function} onChange Function to run any time a field changes
+   * @return {JSX}      A JSX representation of the field
    */
-  generateFlatField: function(name, field) {
+  generateFlatField: function(name, field, onChange) {
     var validators =
       field.validators || (field.validate && [field.validate]) || [];
 
@@ -64,6 +69,7 @@ var FormGenerator = {
           <FlatField
             type='select'
             ref={name}
+            name={name}
             label={field.label || ''}
             placeholder={field.enum[0] || ''}
             defaultValue={field.defaultValue || field.enum[0]}
@@ -73,7 +79,8 @@ var FormGenerator = {
                 );
               })
             }
-            validators={validators}/>
+            validators={validators}
+            onChange={onChange}/>
         );
       }
       else {
@@ -81,10 +88,12 @@ var FormGenerator = {
           <FlatField
             type='text'
             ref={name}
+            name={name}
             label={field.label}
             placeholder={field.label || ''}
             defaultValue={field.defaultValue}
-            validators={validators}/>
+            validators={validators}
+            onChange={onChange}/>
         );
       }
     }
@@ -94,8 +103,10 @@ var FormGenerator = {
           type='checkbox'
           label={field.label}
           ref={name}
+          name={name}
           defaultValue={field.defaultValue}
-          validators={validators}/>
+          validators={validators}
+          onChange={onChange}/>
       );
     }
     else if (field.type === Date) {
@@ -110,16 +121,18 @@ var FormGenerator = {
    * Generate an array field based on its name and type data
    * @param  {String} name  The name (ref) of the array field
    * @param  {Object} fieldSchema Array with one object, the array Field object
+   * @param  {Function} onChange  Function to run any time a field changes
    * @return {ArrayField} A JSX ArrayField representation of the field
    */
-  generateArrayField: function(name, fieldSchema) {
+  generateArrayField: function(name, fieldSchema, onChange) {
     var schema = fieldSchema.type[0];
     return (
       <ArrayField
         ref={name}
         name={name}
         label={fieldSchema.label}
-        schema={schema}/>
+        schema={schema}
+        onChange={onChange}/>
     );
   },
 
@@ -127,9 +140,10 @@ var FormGenerator = {
    * Generate an object field based on its name and type data
    * @param  {String} name  The name (ref) of the object field
    * @param  {Object} field The form-schema of the object-field
-   * @return {JSX}          A JSX representation of the object field
+   * @param  {Function} onChange Function to run any time a field changes
+   * @return {JSX} A JSX representation of the object field
    */
-  generateObjectField: function(name, fieldSchema) {
+  generateObjectField: function(name, fieldSchema, onChange) {
     // Update schema to use dot notation on form field refs
     // to indicate the object-embedded-ness during form construction
     var embeddedSchema = {};
@@ -138,7 +152,7 @@ var FormGenerator = {
       var embeddedAccessor = name + '.' + field;
       embeddedSchema[embeddedAccessor] = fieldSchema.type[field];
     }
-    var embeddedFields = this.generate(embeddedSchema);
+    var embeddedFields = this.generate(embeddedSchema, onChange);
     return (
       <ReactBootstrap.Panel header={fieldSchema.label}>
         {embeddedFields}
@@ -161,7 +175,8 @@ var FlatField = React.createClass({
     placeholder: React.PropTypes.string,
     children: React.PropTypes.array,
     defaultValue: React.PropTypes.string,
-    validators: React.PropTypes.arrayOf(React.PropTypes.func)
+    validators: React.PropTypes.arrayOf(React.PropTypes.func),
+    onChange: React.PropTypes.func
   },
 
   getDefaultProps: function() {
@@ -170,7 +185,8 @@ var FlatField = React.createClass({
       label: '',
       placeholder: '',
       children: [],
-      validators: []
+      validators: [],
+      onChange: function() {}
     };
   },
 
@@ -182,7 +198,6 @@ var FlatField = React.createClass({
   },
 
   validate: function(value) {
-    console.log('validators', this.props.validators);
     return _.compact(
       _.map(this.props.validators, function(validate) {
         return validate(value);
@@ -195,9 +210,13 @@ var FlatField = React.createClass({
   },
 
   componentDidMount: function() {
+    var errorMessages = this.validate(this.getValue());
+    var isValid = !errorMessages.length;
+
     this.setState({
-      errorMessages: this.validate(this.getValue())
+      errorMessages: errorMessages
     });
+    this.props.onChange(this.props.name, isValid);
   },
 
   onChange: function(e) {
@@ -207,10 +226,14 @@ var FlatField = React.createClass({
       ? !this.state.value
       : e.target.value;
 
+    var errorMessages = this.validate(newValue);
+    var isValid = !errorMessages.length;
+
     this.setState({
       value: newValue,
-      errorMessages: this.validate(newValue)
+      errorMessages: errorMessages
     });
+    this.props.onChange(this.props.name, isValid);
   },
 
   getValue: function() {
@@ -274,13 +297,15 @@ var ArrayField = React.createClass({
     schema: React.PropTypes.oneOfType([
       React.PropTypes.object,
       React.PropTypes.func
-    ])
+    ]),
+    onChange: React.PropTypes.func
   },
 
   getDefaultProps: function() {
     return {
       label: '',
-      schema: String
+      schema: String,
+      onChange: function() {}
     };
   },
 
@@ -309,6 +334,8 @@ var ArrayField = React.createClass({
     var that = this;
     var elements = [];
     var schema = that.props.schema;
+    var onChange = that.props.onChange;
+
     _.times(this.state.values, function(index) {
       if (typeof schema === 'object') {
         // Case array of natives or objects
@@ -322,7 +349,7 @@ var ArrayField = React.createClass({
             var objectSchema = {};
             var customName = that.props.name + '-' + index + '.' + field;
             objectSchema[customName] = that.props.schema[field];
-            var formField = FormGenerator.generate(objectSchema);
+            var formField = FormGenerator.generate(objectSchema, onChange);
            objectFields.push(formField);
           }
           elements.push(
@@ -336,10 +363,11 @@ var ArrayField = React.createClass({
       else if (typeof that.props.schema === 'function') {
         elements.push(
           FormGenerator.generateFlatField(
-            that.props.name + '-' + index, {
-              type: that.props.schema,
+            that.props.name + '-' + index,
+            { type: that.props.schema,
               label: that.props.label
-            }
+            },
+            onChange
           )
         );
       }
@@ -382,7 +410,25 @@ var FormGeneratorForm = React.createClass({
 
   getInitialState: function() {
     return {
+      isValid: true,
+      validFieldsMap: {}
     };
+  },
+
+  onChange: function(fieldRef, isFieldValid) {
+    var validityMap = this.state.validFieldsMap;
+    validityMap[fieldRef] = isFieldValid;
+
+    // isFormValid = true when all fields are valid
+    var isFormValid = true;
+    for (var field in validityMap) {
+      isFormValid = isFormValid && validityMap[field];
+    }
+
+    this.setState({
+      validFieldsMap: validityMap,
+      isValid: isFormValid
+    });
   },
 
   /**
@@ -605,9 +651,12 @@ var FormGeneratorForm = React.createClass({
   render: function() {
     return (
       <form>
-        {FormGenerator.generate(this.props.schema)}
+        {FormGenerator.generate(this.props.schema, this.onChange)}
         <br/>
-        <ReactBootstrap.Button bSize='large' onClick={this.props.onSubmit}>
+        <ReactBootstrap.Button
+          bSize='large'
+          onClick={this.props.onSubmit}
+          disabled={!this.state.isValid}>
           Submit
         </ReactBootstrap.Button>
       </form>
