@@ -65,7 +65,8 @@ var FormGenerator = {
                   <option value={val}>{val}</option>
                 );
               })
-            }/>
+            }
+            validate={field.validate}/>
         );
       }
       else {
@@ -75,7 +76,8 @@ var FormGenerator = {
             ref={name}
             label={field.label}
             placeholder={field.label || ''}
-            defaultValue={field.defaultValue}/>
+            defaultValue={field.defaultValue}
+            validate={field.validate}/>
         );
       }
     }
@@ -85,7 +87,8 @@ var FormGenerator = {
           type='checkbox'
           label={field.label}
           ref={name}
-          defaultValue={field.defaultValue}/>
+          defaultValue={field.defaultValue}
+          validate={field.validate}/>
       );
     }
     else if (field.type === Date) {
@@ -154,14 +157,22 @@ var FlatField = React.createClass({
       type: 'text',
       label: '',
       placeholder: '',
-      children: []
+      children: [],
+      validate: function(e) {}
     };
   },
 
   getInitialState: function() {
     return {
-      value: this.props.defaultValue || ''
+      value: this.props.defaultValue || '',
+      errorMessage: ''
     };
+  },
+
+  componentDidMount: function() {
+    this.setState({
+      errorMessage: this.props.validate(this.getValue())
+    });
   },
 
   onChange: function(e) {
@@ -172,7 +183,8 @@ var FlatField = React.createClass({
       : e.target.value;
 
     this.setState({
-      value: newValue
+      value: newValue,
+      errorMessage: this.props.validate(newValue)
     });
   },
 
@@ -181,26 +193,45 @@ var FlatField = React.createClass({
   },
 
   render: function() {
-    if (this.props.type === 'checkbox') {
-      return (
-        <ReactBootstrap.Input
-          type={this.props.type}
-          label={this.props.label}
-          placeholder={this.props.placeholder}
-          onChange={this.onChange}
-          checked={this.getValue()}/>
-      );
-    }
-    return (
-      <ReactBootstrap.Input
-        type={this.props.type}
-        label={this.props.label}
-        placeholder={this.props.placeholder}
-        onChange={this.onChange}
-        defaultValue={this.props.defaultValue || ''}>
-        {this.props.children}
-      </ReactBootstrap.Input>
-    );
+    var errorClass = (this.state.errorMessage && ' has-error') || '';
+    return (function(that) {
+      switch (that.props.type) {
+        case 'text': return (
+          <div className={'form-group' + errorClass}>
+            <label className='control-label'>
+              {that.props.label}
+            </label>
+            <input className={'form-control'}
+              type={that.props.type}
+              label={that.props.label}
+              placeholder={that.props.placeholder}
+              onChange={that.onChange}
+              defaultValue={that.props.defaultValue || ''}/>
+            <span className='help-block'>
+              {that.state.errorMessage}
+            </span>
+          </div>
+        );
+        case 'checkbox': return (
+          <ReactBootstrap.Input
+            type={that.props.type}
+            label={that.props.label}
+            placeholder={that.props.placeholder}
+            onChange={that.onChange}
+            checked={that.getValue()}/>
+        );
+        case 'select': return (
+          <ReactBootstrap.Input
+            type={that.props.type}
+            label={that.props.label}
+            placeholder={that.props.placeholder}
+            onChange={that.onChange}
+            defaultValue={that.props.defaultValue || ''}>
+            {that.props.children}
+          </ReactBootstrap.Input>
+        );
+      }
+    })(this);
   }
 });
 

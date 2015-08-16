@@ -15,7 +15,10 @@ var Example = React.createClass({
       flat_field: {
         type: String,
         label: 'Flat Field',
-        defaultValue: 'Flat Field Default Value'
+        defaultValue: 'Flat Field Default Value',
+        validate: function(val) {
+          return val.length > 10 && 'Error: max length is 10 chars';
+        }
       },
       enum_field: {
         type: String,
