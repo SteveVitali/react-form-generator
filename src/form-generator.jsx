@@ -51,6 +51,13 @@ var FormGenerator = {
    * @return {JSX}          A JSX representation of the field
    */
   generateFlatField: function(name, field) {
+    var validators =
+      field.validators || (field.validate && [field.validate]) || [];
+
+    if (field.isRequired) {
+      validators.push(this.validateNonEmpty);
+    }
+
     if (field.type === String || field.type === Number) {
       if (field.enum) {
         return (
@@ -66,7 +73,7 @@ var FormGenerator = {
                 );
               })
             }
-            validate={field.validate}/>
+            validators={validators}/>
         );
       }
       else {
@@ -77,7 +84,7 @@ var FormGenerator = {
             label={field.label}
             placeholder={field.label || ''}
             defaultValue={field.defaultValue}
-            validate={field.validate}/>
+            validators={validators}/>
         );
       }
     }
@@ -88,7 +95,7 @@ var FormGenerator = {
           label={field.label}
           ref={name}
           defaultValue={field.defaultValue}
-          validate={field.validate}/>
+          validators={validators}/>
       );
     }
     else if (field.type === Date) {
@@ -137,6 +144,11 @@ var FormGenerator = {
         {embeddedFields}
       </ReactBootstrap.Panel>
     );
+  },
+
+  // Useful validator functions
+  validateNonEmpty: function(val) {
+    return !val && 'Error: field is required';
   }
 };
 
@@ -149,7 +161,7 @@ var FlatField = React.createClass({
     placeholder: React.PropTypes.string,
     children: React.PropTypes.array,
     defaultValue: React.PropTypes.string,
-    validate: React.PropTypes.func
+    validators: React.PropTypes.arrayOf(React.PropTypes.func)
   },
 
   getDefaultProps: function() {
@@ -158,20 +170,33 @@ var FlatField = React.createClass({
       label: '',
       placeholder: '',
       children: [],
-      validate: function(e) {}
+      validators: []
     };
   },
 
   getInitialState: function() {
     return {
       value: this.props.defaultValue || '',
-      errorMessage: ''
+      errorMessages: []
     };
+  },
+
+  validate: function(value) {
+    console.log('validators', this.props.validators);
+    return _.compact(
+      _.map(this.props.validators, function(validate) {
+        return validate(value);
+      })
+    );
+  },
+
+  isValid: function() {
+    return !!this.validate(this.getValue()).length;
   },
 
   componentDidMount: function() {
     this.setState({
-      errorMessage: this.props.validate(this.getValue())
+      errorMessages: this.validate(this.getValue())
     });
   },
 
@@ -184,7 +209,7 @@ var FlatField = React.createClass({
 
     this.setState({
       value: newValue,
-      errorMessage: this.props.validate(newValue)
+      errorMessages: this.validate(newValue)
     });
   },
 
@@ -193,7 +218,10 @@ var FlatField = React.createClass({
   },
 
   render: function() {
-    var errorClass = (this.state.errorMessage && ' has-error') || '';
+    var errorClass = this.state.errorMessages.length
+      ? ' has-error'
+      : '';
+
     return (function(that) {
       switch (that.props.type) {
         case 'text': return (
@@ -207,9 +235,13 @@ var FlatField = React.createClass({
               placeholder={that.props.placeholder}
               onChange={that.onChange}
               defaultValue={that.props.defaultValue || ''}/>
-            <span className='help-block'>
-              {that.state.errorMessage}
-            </span>
+            { _.map(that.state.errorMessages, function(msg) {
+                return (
+                  <span className='help-block'>
+                    {msg}
+                  </span>
+                );
+            })}
           </div>
         );
         case 'checkbox': return (

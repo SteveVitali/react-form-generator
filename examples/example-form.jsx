@@ -18,7 +18,8 @@ var Example = React.createClass({
         defaultValue: 'Flat Field Default Value',
         validate: function(val) {
           return val.length > 10 && 'Error: max length is 10 chars';
-        }
+        },
+        isRequired: true
       },
       enum_field: {
         type: String,
@@ -35,7 +36,15 @@ var Example = React.createClass({
         type: {
           embedded_field1: {
             type: String,
-            label: 'Embedded Field 1'
+            label: 'Embedded Field 1',
+            validators: [
+              function(val) {
+                return val.length > 4 && 'Error: max length is 4 chars';
+              },
+              function(val) {
+                return val.indexOf('lmao') === -1 && 'Error: needs lmao';
+              }
+            ]
           },
           embedded_field2: {
             type: String,
