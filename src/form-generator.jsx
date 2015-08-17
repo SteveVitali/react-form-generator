@@ -104,7 +104,8 @@ var FormGenerator = {
             defaultValue={field.defaultValue}
             validators={validators}
             onChange={onChange}
-            isRequired={field.isRequired}/>
+            isRequired={field.isRequired}
+            isNumerical={field.type === Number}/>
         );
       }
     }
@@ -145,6 +146,7 @@ var FormGenerator = {
         label={fieldSchema.label}
         schema={schema}
         onChange={onChange}
+        defaultValue={fieldSchema.defaultValue}
         isRequired={fieldSchema.isRequired}/>
     );
   },
@@ -213,6 +215,15 @@ var FormGenerator = {
           ? 'Error: field is required'
           : null;
       };
+    },
+
+    number: function() {
+      return function(val) {
+        console.log('checking if number', val);
+        return isNaN(val)
+          ? 'Error: value must be numerical'
+          : null;
+      };
     }
   }
 };
@@ -228,7 +239,8 @@ var FlatField = React.createClass({
     defaultValue: React.PropTypes.string,
     validators: React.PropTypes.arrayOf(React.PropTypes.func),
     onChange: React.PropTypes.func,
-    isRequired: React.PropTypes.bool
+    isRequired: React.PropTypes.bool,
+    isNumerical: React.PropTypes.bool
   },
 
   getDefaultProps: function() {
@@ -240,7 +252,8 @@ var FlatField = React.createClass({
       validators: [],
       onChange: function() {},
       defaultValue: '',
-      isRequired: false
+      isRequired: false,
+      isNumerical: false
     };
   },
 
@@ -262,12 +275,16 @@ var FlatField = React.createClass({
   },
 
   validate: function(value) {
+    var validators = this.props.validators;
     // If required, add the nonEmpty validator
-    var validators = this.props.isRequired
-      ? this.props.validators.concat(
-          [FormGenerator.validators.nonEmpty()]
-        )
-      : this.props.validators;
+    validators = this.props.isRequired
+      ? validators.concat([FormGenerator.validators.nonEmpty()])
+      : validators;
+
+    // If type Number, add the number validator
+    validators = this.props.isNumerical
+      ? validators.concat([FormGenerator.validators.number()])
+      : validators;
 
     return _.compact(
       _.map(validators, function(validate) {
@@ -369,28 +386,30 @@ var ArrayField = React.createClass({
       React.PropTypes.object,
       React.PropTypes.func
     ]),
-    onChange: React.PropTypes.func
+    onChange: React.PropTypes.func,
+    defaultValue: React.PropTypes.array
   },
 
   getDefaultProps: function() {
     return {
       label: '',
       schema: String,
-      onChange: function() {}
+      onChange: function() {},
+      defaultValue: ['']
     };
   },
 
   getInitialState: function() {
+    var defaultValue = this.props.defaultValue;
+    var initialLength = defaultValue.length || 1;
     return {
       // The number of things in the array
-      values: 1
+      values: initialLength
     };
   },
 
   reset: function() {
-    this.setState({
-      values: 1
-    });
+    this.setState(this.getInitialState());
   },
 
   addField: function() {
@@ -412,8 +431,11 @@ var ArrayField = React.createClass({
     var elements = [];
     var schema = that.props.schema;
     var onChange = that.props.onChange;
+    var defaultValues = this.props.defaultValue;
 
     _.times(this.state.values, function(index) {
+      var defaultValue = (defaultValues && defaultValues[index]) || '';
+
       if (typeof schema === 'object') {
         // Case array of natives or objects
         if (schema.length && schema.length === 1) {
@@ -426,8 +448,9 @@ var ArrayField = React.createClass({
             var objectSchema = {};
             var customName = that.props.name + '-' + index + '.' + field;
             objectSchema[customName] = that.props.schema[field];
+            objectSchema[customName].defaultValue = defaultValue;
             var formField = FormGenerator.generate(objectSchema, onChange);
-           objectFields.push(formField);
+            objectFields.push(formField);
           }
           elements.push(
             <ReactBootstrap.Panel header={that.props.label}>
@@ -442,7 +465,8 @@ var ArrayField = React.createClass({
           FormGenerator.generateFlatField(
             that.props.name + '-' + index,
             { type: that.props.schema,
-              label: that.props.label
+              label: that.props.label,
+              defaultValue: defaultValue
             },
             onChange
           )

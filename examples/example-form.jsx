@@ -12,7 +12,7 @@ var Example = React.createClass({
   render: function() {
     var that = this;
     return FormGenerator.create({
-      flat_field: {
+      string_field: {
         type: String,
         label: 'Flat Field',
         defaultValue: 'Flat Field Default Value',
@@ -23,6 +23,10 @@ var Example = React.createClass({
           FormGenerator.validators.lengthEquals(5)
         ],
         isRequired: true
+      },
+      number_field: {
+        type: Number,
+        label: 'Number Field'
       },
       enum_field: {
         type: String,
@@ -61,7 +65,8 @@ var Example = React.createClass({
       simple_array_field: {
         type: [String],
         label: 'Array of Strings',
-        isRequired: true
+        isRequired: true,
+        defaultValue: ['ayy', 'lmao', 'welp', 'womp']
       },
       simple_object_array: {
         type: [{
@@ -75,13 +80,10 @@ var Example = React.createClass({
           },
           hidden_embedded_object_array: {
             hidden: true,
-            defaultValue: [{
-              ayy: 'lmao',
-              ayy: 'lmao'
-            }, {
-              lmao: 'ayy',
-              lmao: 'ayy'
-            }]
+            defaultValue: [
+              { ayy: 'lmao' },
+              { lmao: 'ayy' }
+            ]
           }
         }],
         label: 'Simple Object Array'
