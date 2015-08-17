@@ -32,14 +32,20 @@ var FormGenerator = {
         if (field.type.length && field.type.length === 1) {
           // Array of native type like [String]
           // or [{ object: type, like: this }]
-          fields.push(this.generateArrayField(fieldName, field, onChange));
+          fields.push(
+            this.generateArrayField(fieldName, field, onChange)
+          );
         } else {
           // Regular { embedded: object }
-          fields.push(this.generateObjectField(fieldName, field, onChange));
+          fields.push(
+            this.generateObjectField(fieldName, field, onChange)
+          );
         }
       } else {
         // Flat field
-        fields.push(this.generateFlatField(fieldName, field, onChange));
+        fields.push(
+          this.generateFlatField(fieldName, field, onChange)
+        );
       }
     }
     return fields;
@@ -55,10 +61,6 @@ var FormGenerator = {
   generateFlatField: function(name, field, onChange) {
     var validators =
       field.validators || (field.validate && [field.validate]) || [];
-
-    if (field.isRequired) {
-      validators.push(this.validateNonEmpty);
-    }
 
     if (field.hidden) {
       return (
@@ -87,7 +89,8 @@ var FormGenerator = {
               })
             }
             validators={validators}
-            onChange={onChange}/>
+            onChange={onChange}
+            isRequired={field.isRequired}/>
         );
       }
       else {
@@ -100,7 +103,8 @@ var FormGenerator = {
             placeholder={field.label || ''}
             defaultValue={field.defaultValue}
             validators={validators}
-            onChange={onChange}/>
+            onChange={onChange}
+            isRequired={field.isRequired}/>
         );
       }
     }
@@ -113,7 +117,8 @@ var FormGenerator = {
           name={name}
           defaultValue={field.defaultValue}
           validators={validators}
-          onChange={onChange}/>
+          onChange={onChange}
+          isRequired={field.isRequired}/>
       );
     }
     else if (field.type === Date) {
@@ -139,7 +144,8 @@ var FormGenerator = {
         name={name}
         label={fieldSchema.label}
         schema={schema}
-        onChange={onChange}/>
+        onChange={onChange}
+        isRequired={fieldSchema.isRequired}/>
     );
   },
 
@@ -168,8 +174,46 @@ var FormGenerator = {
   },
 
   // Useful validator functions
-  validateNonEmpty: function(val) {
-    return !val && 'Error: field is required';
+  validators: {
+    lengthEquals: function(len) {
+      return function(val) {
+        return (val || '').length !== len
+          ? 'Error: must be of length ' + len
+          : null;
+      };
+    },
+
+    minLength: function(min) {
+      return function(val) {
+        return (val || '').length < min
+          ? 'Error: must be at least ' + min + ' characters'
+          : null;
+      };
+    },
+
+    maxLength: function(max) {
+      return function(val) {
+        return (val || '').length > max
+          ? 'Error: must be less than ' + (max + 1) + ' characters'
+          : null;
+      };
+    },
+
+    regex: function(regex) {
+      return function(val) {
+        return !(val || '').match(regex)
+          ? 'Error: invalid input'
+          : null;
+      };
+    },
+
+    nonEmpty: function() {
+      return function(val) {
+        return !val
+          ? 'Error: field is required'
+          : null;
+      };
+    }
   }
 };
 
@@ -183,7 +227,8 @@ var FlatField = React.createClass({
     children: React.PropTypes.array,
     defaultValue: React.PropTypes.string,
     validators: React.PropTypes.arrayOf(React.PropTypes.func),
-    onChange: React.PropTypes.func
+    onChange: React.PropTypes.func,
+    isRequired: React.PropTypes.bool
   },
 
   getDefaultProps: function() {
@@ -194,7 +239,8 @@ var FlatField = React.createClass({
       children: [],
       validators: [],
       onChange: function() {},
-      defaultValue: ''
+      defaultValue: '',
+      isRequired: false
     };
   },
 
@@ -216,8 +262,15 @@ var FlatField = React.createClass({
   },
 
   validate: function(value) {
+    // If required, add the nonEmpty validator
+    var validators = this.props.isRequired
+      ? this.props.validators.concat(
+          [FormGenerator.validators.nonEmpty()]
+        )
+      : this.props.validators;
+
     return _.compact(
-      _.map(this.props.validators, function(validate) {
+      _.map(validators, function(validate) {
         return validate(value);
       })
     );

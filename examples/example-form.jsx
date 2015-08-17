@@ -16,16 +16,20 @@ var Example = React.createClass({
         type: String,
         label: 'Flat Field',
         defaultValue: 'Flat Field Default Value',
-        validate: function(val) {
-          return val.length > 10 && 'Error: max length is 10 chars';
-        },
+        validators: [
+          FormGenerator.validators.regex(/\d+/),
+          FormGenerator.validators.maxLength(10),
+          FormGenerator.validators.minLength(1),
+          FormGenerator.validators.lengthEquals(5)
+        ],
         isRequired: true
       },
       enum_field: {
         type: String,
         enum: ['', 'value 1', 'value 2', 'value 3', 'enum default'],
         label: 'Enum field',
-        defaultValue: 'enum default'
+        defaultValue: 'enum default',
+        isRequired: true
       },
       boolean_field: {
         type: Boolean,
@@ -56,7 +60,8 @@ var Example = React.createClass({
       },
       simple_array_field: {
         type: [String],
-        label: 'Array of Strings'
+        label: 'Array of Strings',
+        isRequired: true
       },
       simple_object_array: {
         type: [{
