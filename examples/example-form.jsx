@@ -67,6 +67,16 @@ var Example = React.createClass({
           obj_arr_field2: {
             type: String,
             label: 'Object array field 2'
+          },
+          hidden_embedded_object_array: {
+            hidden: true,
+            defaultValue: [{
+              ayy: 'lmao',
+              ayy: 'lmao'
+            }, {
+              lmao: 'ayy',
+              lmao: 'ayy'
+            }]
           }
         }],
         label: 'Simple Object Array'
@@ -136,6 +146,16 @@ var Example = React.createClass({
           }
         }],
         label: 'Object Array'
+      },
+      hidden_object_array: {
+        hidden: true,
+        defaultValue: [{
+          ayy: 'lmao',
+          ayy: 'lmao'
+        }, {
+          lmao: 'ayy',
+          lmao: 'ayy'
+        }]
       }
     },
     'myFormRef',
@@ -143,7 +163,7 @@ var Example = React.createClass({
       var myForm = that.refs.myFormRef;
       console.log('Submit clicked!');
       console.log('Parsing form!', myForm.parse());
-      myForm.reset();
+      // myForm.reset();
     });
   }
 });

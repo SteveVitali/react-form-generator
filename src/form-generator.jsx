@@ -60,6 +60,16 @@ var FormGenerator = {
       validators.push(this.validateNonEmpty);
     }
 
+    if (field.hidden) {
+      return (
+        <FlatField
+          type='hidden'
+          ref={name}
+          name={name}
+          defaultValue={field.defaultValue}/>
+      );
+    }
+
     if (field.type === String || field.type === Number) {
       if (field.enum) {
         return (
@@ -292,6 +302,7 @@ var FlatField = React.createClass({
             {that.props.children}
           </ReactBootstrap.Input>
         );
+        case 'hidden': return null;
       }
     })(this);
   }
@@ -619,8 +630,7 @@ var FormGeneratorForm = React.createClass({
     // like 'things.thing_attribute-0'
     var parseField = function parseField(accumulatorField, context) {
       var fieldPath = getFieldPath(accumulatorField);
-      console.log('Calling parseField on', accumulatorField, fieldPath);
-      console.log('WITH CONTEXT', context);
+      console.log('parseField:', accumulatorField, fieldPath, context);
 
       // Dot into the schema field, which may or may not
       // be deeply nested in an object
@@ -637,8 +647,15 @@ var FormGeneratorForm = React.createClass({
         field = field[fieldPath[count]];
       }
       console.log('We get the field', field, schema);
+
+      // If the field is hidden, bypass everything else
+      // and just immediately store the defaultValue of it
+      // using parseFlatField
+      if (field.hidden) {
+        parseFlatField(accumulatorField, context);
+      }
       // Native type
-      if (typeof field.type === 'function') {
+      else if (typeof field.type === 'function') {
         parseFlatField(accumulatorField, context);
       }
       else if (typeof field.type === 'object') {
