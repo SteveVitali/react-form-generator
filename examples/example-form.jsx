@@ -86,6 +86,12 @@ var Example = React.createClass({
             ]
           }
         }],
+        defaultValue: [
+          { obj_arr_field1: 'lol',
+            obj_arr_field2: 'ayy' },
+          { obj_arr_field1: 'womp',
+            obj_arr_field2: 'welp' }
+        ],
         label: 'Simple Object Array'
       },
       object_of_objects: {
@@ -152,7 +158,17 @@ var Example = React.createClass({
             label: 'Object Array Object Field'
           }
         }],
-        label: 'Object Array'
+        label: 'Object Array',
+        defaultValue: [{
+          flat_field: 'flat field',
+          object_field: {
+            object_array_object_field1: 'object field',
+            object_array_array_field: [{
+              object_array_object_array_field1: 'ayyy',
+              object_array_object_array_field2: 'lmao'
+            }]
+          }
+        }]
       },
       hidden_object_array: {
         hidden: true,
@@ -163,13 +179,39 @@ var Example = React.createClass({
           lmao: 'ayy',
           lmao: 'ayy'
         }]
+      },
+      simple_array_of_arrays: {
+        type: [[String]],
+        label: 'Array of Array of Strings'
+      },
+      simple_array_of_object_arrays: {
+        type: [[{
+          welp: {
+            type: String,
+            label: 'lol'
+          }
+        }]],
+        label: 'Hm'
+      },
+      complex_array_of_arrays: {
+        type: [[[{
+          array_array_field: {
+            type: String,
+            label: 'Array Array Field'
+          },
+          array_array_array_array: {
+            type: [[String]],
+            label: 'Array Array Array Array'
+          }
+        }]]],
+        label: 'Complex Array of Arrays'
       }
     },
     'myFormRef',
     function() {
       var myForm = that.refs.myFormRef;
       console.log('Submit clicked!');
-      console.log('Parsing form!', myForm.parse());
+      console.log('Parsing form!', myForm.getValue());
       // myForm.reset();
     });
   }

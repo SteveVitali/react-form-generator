@@ -18,14 +18,27 @@ var FormGenerator = {
 
   /**
    * Generate a set of input fields based on a form schema.
-   * @param  {Schema}   schema     The mongoose-esque form schema
+   * @param  {Schema}   schema     A mongoose-yform schema
+   * @param  {Any}      defaultValue The default value for this field
    * @param  {Function} onChange   Function to run any time a field changes
    * @return {Array} An array of JSX Input fields representing the schema
    */
-  generate: function(schema, onChange) {
+  generate: function(schema, defaultValue, onChange) {
+    // Special case for array schemas
+    if (_.isArray(schema)) {
+      return [
+        <ArrayField
+          ref={key}
+          schema={schema[0]}
+          onChange={onChange}/>
+      ];
+    }
     var fields = [];
-    for (var fieldName in schema) {
-      var field = schema[fieldName];
+    for (var key in schema) {
+      var field = schema[key];
+      // Lower level default values take precedence
+      defaultValue = defaultValue || {};
+      var defaultVal = field.defaultValue || defaultValue[key] || '';
 
       if (typeof field.type === 'object') {
         // Validate that it's an array
@@ -33,18 +46,28 @@ var FormGenerator = {
           // Array of native type like [String]
           // or [{ object: type, like: this }]
           fields.push(
-            this.generateArrayField(fieldName, field, onChange)
+            <ArrayField
+              ref={key}
+              label={field.label}
+              schema={field.type[0]}
+              onChange={onChange}
+              defaultValue={defaultVal}/>
           );
         } else {
           // Regular { embedded: object }
           fields.push(
-            this.generateObjectField(fieldName, field, onChange)
+            <ObjectField
+              ref={key}
+              label={field.label}
+              schema={field.type}
+              onChange={onChange}
+              defaultValue={defaultVal}/>
           );
         }
       } else {
         // Flat field
         fields.push(
-          this.generateFlatField(fieldName, field, onChange)
+          this.generateFlatField(key, field, defaultVal, onChange)
         );
       }
     }
@@ -55,10 +78,11 @@ var FormGenerator = {
    * Generate a flat field based on its name and type data
    * @param  {String}   name     The name (ref) of the field
    * @param  {Object}   field    The Field object
+   * @param  {String}   defaultValue The default value for this field
    * @param  {Function} onChange Function to run any time a field changes
    * @return {JSX}      A JSX representation of the field
    */
-  generateFlatField: function(name, field, onChange) {
+  generateFlatField: function(name, field, defaultValue, onChange) {
     var validators =
       field.validators || (field.validate && [field.validate]) || [];
 
@@ -67,8 +91,7 @@ var FormGenerator = {
         <FlatField
           type='hidden'
           ref={name}
-          name={name}
-          defaultValue={field.defaultValue}/>
+          defaultValue={defaultValue}/>
       );
     }
 
@@ -78,10 +101,9 @@ var FormGenerator = {
           <FlatField
             type='select'
             ref={name}
-            name={name}
             label={field.label || ''}
             placeholder={field.enum[0] || ''}
-            defaultValue={field.defaultValue || field.enum[0]}
+            defaultValue={defaultValue || field.enum[0]}
             children={ _.map(field.enum, function(val) {
                 return (
                   <option value={val}>{val}</option>
@@ -98,10 +120,9 @@ var FormGenerator = {
           <FlatField
             type='text'
             ref={name}
-            name={name}
             label={field.label}
             placeholder={field.label || ''}
-            defaultValue={field.defaultValue}
+            defaultValue={defaultValue}
             validators={validators}
             onChange={onChange}
             isRequired={field.isRequired}
@@ -115,8 +136,7 @@ var FormGenerator = {
           type='checkbox'
           label={field.label}
           ref={name}
-          name={name}
-          defaultValue={field.defaultValue}
+          defaultValue={defaultValue}
           validators={validators}
           onChange={onChange}
           isRequired={field.isRequired}/>
@@ -128,51 +148,6 @@ var FormGenerator = {
     else {
       throw 'Unsupported type';
     }
-  },
-
-  /**
-   * Generate an array field based on its name and type data
-   * @param  {String} name  The name (ref) of the array field
-   * @param  {Object} fieldSchema Array with one object, the array Field object
-   * @param  {Function} onChange  Function to run any time a field changes
-   * @return {ArrayField} A JSX ArrayField representation of the field
-   */
-  generateArrayField: function(name, fieldSchema, onChange) {
-    var schema = fieldSchema.type[0];
-    return (
-      <ArrayField
-        ref={name}
-        name={name}
-        label={fieldSchema.label}
-        schema={schema}
-        onChange={onChange}
-        defaultValue={fieldSchema.defaultValue}
-        isRequired={fieldSchema.isRequired}/>
-    );
-  },
-
-  /**
-   * Generate an object field based on its name and type data
-   * @param  {String} name  The name (ref) of the object field
-   * @param  {Object} field The form-schema of the object-field
-   * @param  {Function} onChange Function to run any time a field changes
-   * @return {JSX} A JSX representation of the object field
-   */
-  generateObjectField: function(name, fieldSchema, onChange) {
-    // Update schema to use dot notation on form field refs
-    // to indicate the object-embedded-ness during form construction
-    var embeddedSchema = {};
-    // Note: fieldSchema.type is itself a schema
-    for (var field in fieldSchema.type) {
-      var embeddedAccessor = name + '.' + field;
-      embeddedSchema[embeddedAccessor] = fieldSchema.type[field];
-    }
-    var embeddedFields = this.generate(embeddedSchema, onChange);
-    return (
-      <ReactBootstrap.Panel header={fieldSchema.label}>
-        {embeddedFields}
-      </ReactBootstrap.Panel>
-    );
   },
 
   // Useful validator functions
@@ -219,7 +194,6 @@ var FormGenerator = {
 
     number: function() {
       return function(val) {
-        console.log('checking if number', val);
         return isNaN(val)
           ? 'Error: value must be numerical'
           : null;
@@ -228,11 +202,266 @@ var FormGenerator = {
   }
 };
 
+var FormGeneratorForm = React.createClass({
+  propTypes: {
+    schema: React.PropTypes.object.isRequired,
+    onSubmit: React.PropTypes.func,
+    defaultValue: React.PropTypes.object,
+    label: React.PropTypes.string
+  },
+
+  getDefaultProps: function() {
+    return {
+      label: '',
+      onSubmit: function() {}
+    };
+  },
+
+  getInitialState: function() {
+    return {
+      isValid: true
+    };
+  },
+
+  onChange: function() {
+    var that = this;
+    setTimeout(function() {
+      that.setState({
+        isValid: that.isValid()
+      });
+    }, 100);
+  },
+
+  getValue: function() {
+    return this.refs.toplevelForm.getValue();
+  },
+
+  isValid: function() {
+    return this.refs.toplevelForm.isValid();
+  },
+
+  reset: function() {
+    throw 'Reset unimplemented';
+  },
+
+  render: function() {
+    return (
+      <form>
+        <ObjectField ref='toplevelForm'
+          schema={this.props.schema}
+          defaultValue={this.props.defaultValue}
+          label={this.props.label}
+          onChange={this.onChange}/>
+        <br/>
+        <ReactBootstrap.Button
+          bSize='large'
+          onClick={this.props.onSubmit}
+          disabled={!this.state.isValid}>
+          Submit
+        </ReactBootstrap.Button>
+      </form>
+    );
+  }
+});
+
+var ObjectField = React.createClass({
+  propTypes: {
+    schema: React.PropTypes.object.isRequired,
+    onChange: React.PropTypes.func.isRequired,
+    label: React.PropTypes.string,
+    defaultValue: React.PropTypes.object
+  },
+
+  getDefaultProps: function() {
+    return {
+      label: ''
+    };
+  },
+
+  getInitialState: function() {
+    return {};
+  },
+
+  getValue: function() {
+    var that = this;
+    return _.mapObject(this.props.schema, function(val, key) {
+      return that.refs[key].getValue();
+    });
+  },
+
+  setValue: function(newValue) {
+    for (var key in this.props.schema) {
+      that.refs[key].setValue(newValue[key]);
+    }
+  },
+
+  onChange: function() {
+    this.props.onChange();
+  },
+
+  isValid: function() {
+    var valid = true;
+    console.log('object refs', this.refs);
+    for (var field in this.props.schema) {
+      valid = valid && this.refs[field].isValid();
+    }
+    return valid;
+  },
+
+  reset: function() {
+    for (var field in this.props.schema) {
+      this.refs[field].reset();
+    }
+  },
+
+  render: function() {
+    var schema = this.props.schema;
+    var onChange = this.props.onChange;
+    var defaultValue = this.props.defaultValue;
+    var subFields = FormGenerator.generate(schema, defaultValue, onChange);
+
+    return (
+      <ReactBootstrap.Panel header={this.props.label}>
+        {subFields}
+      </ReactBootstrap.Panel>
+    );
+  }
+});
+
+var ArrayField = React.createClass({
+  propTypes: {
+    schema: React.PropTypes.oneOfType([
+      React.PropTypes.func,
+      React.PropTypes.object
+    ]).isRequired,
+    onChange: React.PropTypes.func.isRequired,
+    label: React.PropTypes.string,
+    initialLength: React.PropTypes.number
+  },
+
+  getDefaultProps: function() {
+    return {
+      defaultValue: [],
+      label: '',
+      initialLength: 1,
+      refPrefix: 'array_ref'
+    };
+  },
+
+  getInitialState: function() {
+    var negativeOrZero = function(num) {
+      return num < 0 ? 0 : num;
+    };
+    var defaultLength = negativeOrZero(this.props.defaultValue.length);
+    var initialLength = negativeOrZero(this.props.initialLength);
+    var actualLength = defaultLength || initialLength || 1;
+    return {
+      size: actualLength
+    };
+  },
+
+  getValue: function() {
+    var that = this;
+    var refPrefix = this.props.refPrefix;
+    var values = [];
+    _.times(this.state.size, function(i) {
+      values.push(that.refs[refPrefix + i].getValue());
+    });
+    return values;
+  },
+
+  setValue: function(values) {
+    var refs = this.refs;
+    var refPrefix = this.props.refPrefix;
+    _.each(values, function(value, i) {
+      refs[refPrefix + i].setValue(value);
+    });
+  },
+
+  isValid: function() {
+    var that = this;
+    var refPrefix = this.props.refPrefix;
+    var valid = true;
+    console.log('array refs', this.refs);
+    _.times(this.state.size, function(i) {
+      console.log('validating ref', refPrefix + i);
+      valid = valid && that.refs[refPrefix + i].isValid();
+    });
+    return valid;
+  },
+
+  addField: function() {
+    this.setState({
+      size: this.state.size + 1
+    });
+  },
+
+  removeField: function() {
+    var decremented = this.state.size - 1;
+    // Don't let the number of values become < 1
+    this.setState({
+      size: decremented || 1
+    });
+  },
+
+  render: function() {
+    var that = this;
+    var schema = this.props.schema;
+    var refPrefix = this.props.refPrefix;
+    var defaultValue = this.props.defaultValue;
+    var onChange = this.props.onChange;
+
+    var arrayFields = [];
+    _.times(this.state.size, function(i) {
+      var defaultVal = (defaultValue && defaultValue[i]) || '';
+      var fieldRef = refPrefix + i;
+      console.log('array fieldRef', fieldRef);
+      // Flat/native type
+      if (typeof schema === 'function') {
+        var mockSchema = {
+          type: schema,
+          label: that.props.label
+        };
+        arrayFields.push(
+          FormGenerator.generateFlatField(
+            fieldRef, mockSchema, defaultVal, onChange
+          )
+        );
+      } else {
+        // It's an object or an object array, so use 'generate'
+        var schemaWrapper = {};
+        schemaWrapper[fieldRef] = { type: schema };
+        arrayFields.push(
+          FormGenerator.generate(schemaWrapper, defaultVal, onChange)
+        );
+      }
+    });
+    return (
+      <div>
+        <ReactBootstrap.Panel header={that.props.label}>
+          {arrayFields}
+          <ReactBootstrap.Button
+            bsStyle='primary'
+            bsSize='xsmall'
+            onClick={that.addField}>
+            Add
+          </ReactBootstrap.Button>
+          <ReactBootstrap.Button
+            bsStyle='primary'
+            bsSize='xsmall'
+            onClick={that.removeField}>
+            Remove
+          </ReactBootstrap.Button>
+        </ReactBootstrap.Panel>
+      </div>
+    );
+  }
+});
+
 var FlatField = React.createClass({
   propTypes: {
     // text or select
     type: React.PropTypes.string,
-    name: React.PropTypes.string.isRequired,
     label: React.PropTypes.string,
     placeholder: React.PropTypes.string,
     children: React.PropTypes.array,
@@ -271,7 +500,7 @@ var FlatField = React.createClass({
     this.setState({
       errorMessages: errorMessages
     });
-    this.props.onChange(this.props.name, isValid);
+    this.props.onChange();
   },
 
   validate: function(value) {
@@ -294,7 +523,7 @@ var FlatField = React.createClass({
   },
 
   isValid: function() {
-    return !!this.validate(this.getValue()).length;
+    return !this.validate(this.getValue()).length;
   },
 
   getValue: function() {
@@ -308,12 +537,10 @@ var FlatField = React.createClass({
     this.setState({
       value: newValue,
       errorMessages: errorMessages
-    });
-    this.props.onChange(this.props.name, isValid);
+    }, this.props.onChange);
   },
 
   reset: function() {
-    console.log('Resetting node', this.props.name);
     this.setValue(this.props.defaultValue);
   },
 
@@ -375,411 +602,5 @@ var FlatField = React.createClass({
         case 'hidden': return null;
       }
     })(this);
-  }
-});
-
-var ArrayField = React.createClass({
-  propTypes: {
-    name: React.PropTypes.string.isRequired,
-    label: React.PropTypes.string,
-    schema: React.PropTypes.oneOfType([
-      React.PropTypes.object,
-      React.PropTypes.func
-    ]),
-    onChange: React.PropTypes.func,
-    defaultValue: React.PropTypes.array
-  },
-
-  getDefaultProps: function() {
-    return {
-      label: '',
-      schema: String,
-      onChange: function() {},
-      defaultValue: ['']
-    };
-  },
-
-  getInitialState: function() {
-    var defaultValue = this.props.defaultValue;
-    var initialLength = defaultValue.length || 1;
-    return {
-      // The number of things in the array
-      values: initialLength
-    };
-  },
-
-  reset: function() {
-    this.setState(this.getInitialState());
-  },
-
-  addField: function() {
-    this.setState({
-      values: this.state.values + 1
-    });
-  },
-
-  removeField: function() {
-    var decremented = this.state.values - 1;
-    // Don't let the number of values become < 1
-    this.setState({
-      values: decremented || 1
-    });
-  },
-
-  render: function() {
-    var that = this;
-    var elements = [];
-    var schema = that.props.schema;
-    var onChange = that.props.onChange;
-    var defaultValues = this.props.defaultValue;
-
-    _.times(this.state.values, function(index) {
-      var defaultValue = (defaultValues && defaultValues[index]) || '';
-
-      if (typeof schema === 'object') {
-        // Case array of natives or objects
-        if (schema.length && schema.length === 1) {
-          throw 'Arrays of arrays are unimplemented';
-        }
-        // Case array of objects
-        else {
-          var objectFields = [];
-          for (var field in that.props.schema) {
-            var objectSchema = {};
-            var customName = that.props.name + '-' + index + '.' + field;
-            objectSchema[customName] = that.props.schema[field];
-            objectSchema[customName].defaultValue = defaultValue;
-            var formField = FormGenerator.generate(objectSchema, onChange);
-            objectFields.push(formField);
-          }
-          elements.push(
-            <ReactBootstrap.Panel header={that.props.label}>
-              {objectFields}
-            </ReactBootstrap.Panel>
-          );
-        }
-      }
-      // Case raw native type
-      else if (typeof that.props.schema === 'function') {
-        elements.push(
-          FormGenerator.generateFlatField(
-            that.props.name + '-' + index,
-            { type: that.props.schema,
-              label: that.props.label,
-              defaultValue: defaultValue
-            },
-            onChange
-          )
-        );
-      }
-    });
-    var btnStyle = {
-      marginTop: '-14px',
-      marginBottom: '10px'
-    };
-    return (
-      <span>
-        {elements}
-        <ReactBootstrap.Button
-          style={btnStyle}
-          bsStyle='primary'
-          bsSize='xsmall'
-          onClick={this.addField}>
-          Add
-        </ReactBootstrap.Button>
-        <ReactBootstrap.Button
-          style={btnStyle}
-          bsStyle='primary'
-          bsSize='xsmall'
-          onClick={this.removeField}>
-          Remove
-        </ReactBootstrap.Button>
-      </span>
-    );
-  }
-});
-
-var FormGeneratorForm = React.createClass({
-  propTypes: {
-    schema: React.PropTypes.object.isRequired,
-    onSubmit: React.PropTypes.func.isRequired
-  },
-
-  getDefaultProps: function() {
-    return {};
-  },
-
-  getInitialState: function() {
-    return {
-      isValid: true,
-      validFieldsMap: {}
-    };
-  },
-
-  onChange: function(fieldRef, isFieldValid) {
-    var validityMap = this.state.validFieldsMap;
-    validityMap[fieldRef] = isFieldValid;
-
-    // isFormValid = true when all fields are valid
-    var isFormValid = true;
-    for (var field in validityMap) {
-      isFormValid = isFormValid && validityMap[field];
-    }
-
-    this.setState({
-      validFieldsMap: validityMap,
-      isValid: isFormValid
-    });
-  },
-
-  isValid: function() {
-    return this.state.isValid;
-  },
-
-  reset: function() {
-    var clearRefs = function clearRefs(contextNode, ref) {
-      var refNode = contextNode.refs[ref];
-      refNode.reset && refNode.reset();
-      for (var subRef in refNode.refs) {
-        clearRefs(refNode, subRef);
-      }
-    };
-    for (var ref in this.refs) {
-      clearRefs(this, ref);
-    }
-  },
-
-  /**
-   * Extract from the form data an object that is formatted
-   * in the same way as the original form schema
-   * @return {Object} An object representing the form data
-   */
-  parse: function() {
-    var that = this;
-    var schema = this.props.schema;
-    // All the parse functions below will populate this object
-    // with the correct form data and in the end build up an
-    // object in the same shape as the schema, with data populated
-    var parsedFormData = {};
-
-    var getValueFromRef = function(contextNode, ref) {
-      var node = contextNode.refs[ref];
-      return node ? node.getValue() : undefined;
-    };
-
-    var getRawFormData = function(ref) {
-      return getValueFromRef(that, ref);
-    };
-
-    // e.g. 'welp-12.welp_subfield.womp-4' => welp.welp_subfield.womp
-    var getFieldPath = function(fieldString) {
-      // This regex matches all the suffixes added to array field
-      // property names, like the '-12' in 'welp-12', the 13th
-      // element in an array called welp8
-      var arrayRegex = /([-][0-9]+)/g;
-      var cleanPath = fieldString.replace(arrayRegex, '');
-      return cleanPath.split('.');
-    };
-
-    var getTokenAccessor = function(token) {
-      return isNaN(token)
-        ? token
-        : (-1 * Number(token));
-    };
-
-    // fieldRef is the ref to this field
-    var parseFlatField = function(fieldRef, context) {
-      console.log('Parsing flat field with ref', fieldRef);
-      // Use rawFormData to get the eventual value we store
-      var fieldValue = getValueFromRef(context, fieldRef);
-
-      // Don't bother constructing the field in the results object
-      // if we're just going to put an emptystring there
-      if (fieldValue === '') { return; }
-
-      // e.g. 'welp-1.womp.welp-2.wilp'
-      //   => ["welp", "-1", "womp", undefined, "welp", "-2", "wilp"]
-      var splitComponents = [];
-      var fieldSplit = fieldRef.split('.');
-      _.each(fieldSplit, function(token) {
-        var arraySplit = token.split('-');
-        _.each(arraySplit, function(smallerToken) {
-          splitComponents.push(getTokenAccessor(smallerToken));
-        });
-      });
-
-      console.log('Tokenized', fieldRef, 'into', splitComponents);
-
-      // This will be where we store the eventual fieldValue
-      var targetObject = parsedFormData;
-
-      var count = -1;
-      while (++count < splitComponents.length) {
-        var token = getTokenAccessor(splitComponents[count]);
-        console.log('TOKEN' + count, token);
-        if (token === undefined) { continue; }
-        // Token can be an array accessor or a field name
-        // Javascript treats them both the same though :)
-        if (count === splitComponents.length - 1) {
-          // Set the field and return
-          console.log('last token chunk', token, fieldValue);
-          return (targetObject[token] = fieldValue);
-        } else {
-          // If token is an array index, make sure array exists
-          // and is big enough
-          var nextToken = getTokenAccessor(splitComponents[count + 1]);
-          if (!isNaN(nextToken)) {
-            if (!targetObject[token] || !targetObject[token].length) {
-              console.log('initializing array called', token);
-              targetObject[token] = [];
-            }
-            while (targetObject.length < nextToken) {
-              // In 99.99% of cases, this should just add
-              // one dummy object so the array is long enough
-              targetObject.push({});
-            }
-          } else {
-            if (!targetObject[token]) {
-              console.log('initializing object at field', token);
-              targetObject[token] = {};
-            }
-          }
-          targetObject = targetObject[token];
-        }
-      }
-    };
-
-    // This converts the array-form-field-ref naming scheme of
-    // field-0, field-1, field-2, etc. into an actual array
-    // in the parsedFormData object
-    var parseFlatArrayField = function(fieldRef, context) {
-      console.log('Parsing flat array field with ref', fieldRef);
-      var count = 0;
-      var arrayParentNode = context.refs[fieldRef];
-      var value = getValueFromRef(arrayParentNode, fieldRef + '-' + count);
-      while (value !== undefined) {
-        if (!parsedFormData[fieldRef]) {
-          parsedFormData[fieldRef] = [];
-        }
-        parsedFormData[fieldRef].push(value);
-        var newRef = fieldRef + '-' + (++count);
-        value = getValueFromRef(arrayParentNode, newRef);
-      }
-      parsedFormData[fieldRef] = _.compact(parsedFormData[fieldRef]);
-    };
-
-    var parseObjectField = function(field, fieldSchema, context) {
-      console.log('Parsing object field', field);
-      for (var subField in fieldSchema) {
-        parseField(field + '.' + subField, context);
-      }
-    };
-
-    var parseObjectArrayField = function(fieldRef, fieldSchema, context) {
-      console.log('Parsing object array field', fieldRef);
-
-      var arrayParentNode = context.refs[fieldRef];
-
-      // We need to do this to account for cases where there are
-      // embedded object arrays, since, for example, we could have
-      // a ref to 'object_field.field1', but not to 'object_field'
-      var refs = _.keys(arrayParentNode.refs);
-      var hasRef = function(ref) {
-        return _.reduce(refs, function(memo, r) {
-          return memo || r.indexOf(ref) !== -1;
-        }, false);
-      };
-
-      for (var subField in fieldSchema) {
-        var count = 0;
-        var fieldPath = fieldRef + '-' + count + '.' + subField;
-        while (hasRef(fieldPath)) {
-          parseField(fieldPath, arrayParentNode);
-          fieldPath = fieldRef + '-' + (++count) + '.' + subField;
-        }
-      }
-    };
-
-    // accumulatorField represents the field's actual
-    // nref attribute in the JSX form
-    // e.g. array of objects field could be called 'things'
-    // whereas individual things would have name attributes
-    // like 'things.thing_attribute-0'
-    var parseField = function parseField(accumulatorField, context) {
-      var fieldPath = getFieldPath(accumulatorField);
-      console.log('parseField:', accumulatorField, fieldPath, context);
-
-      // Dot into the schema field, which may or may not
-      // be deeply nested in an object
-      var field = schema[fieldPath[0]];
-      var count = 0;
-      while (++count < fieldPath.length) {
-        if (typeof field.type === 'object' && field.type.length === 1) {
-          // It's an array and we have to dot into the zeroth element
-          field = field.type[0];
-        }
-        else {
-          field = field.type;
-        }
-        field = field[fieldPath[count]];
-      }
-      console.log('We get the field', field, schema);
-
-      // If the field is hidden, bypass everything else
-      // and just immediately store the defaultValue of it
-      // using parseFlatField
-      if (field.hidden) {
-        parseFlatField(accumulatorField, context);
-      }
-      // Native type
-      else if (typeof field.type === 'function') {
-        parseFlatField(accumulatorField, context);
-      }
-      else if (typeof field.type === 'object') {
-        if (field.type.length) {
-          // Array field
-          if (field.type.length === 1) {
-            // Array of native types
-            if (typeof field.type[0] === 'function') {
-              parseFlatArrayField(accumulatorField, context);
-            }
-            // Array of objects
-            else if (typeof field.type[0] === 'object') {
-              parseObjectArrayField(accumulatorField, field.type[0], context);
-            }
-            else {
-              throw 'Parse Error: Unsupported schema';
-            }
-          }
-          else {
-            throw 'Parse Error: Invalid schema';
-          }
-        }
-        // Regular object field
-        else {
-          parseObjectField(accumulatorField, field.type, context);
-        }
-      }
-    };
-    // Parse the fields
-    for (var field in schema) {
-      parseField(field, that);
-    }
-    return parsedFormData;
-  },
-
-  render: function() {
-    return (
-      <form>
-        {FormGenerator.generate(this.props.schema, this.onChange)}
-        <br/>
-        <ReactBootstrap.Button
-          bSize='large'
-          onClick={this.props.onSubmit}
-          disabled={!this.state.isValid}>
-          Submit
-        </ReactBootstrap.Button>
-      </form>
-    );
   }
 });
