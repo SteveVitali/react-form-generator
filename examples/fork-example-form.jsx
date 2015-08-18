@@ -40,54 +40,60 @@ var Example = React.createClass({
         label: 'Boolean field',
         defaultValue: true
       },
-      // simple_object_field: {
-      //   type: {
-      //     embedded_field1: {
-      //       type: String,
-      //       label: 'Embedded Field 1',
-      //       validators: [
-      //         function(val) {
-      //           return val.length > 4 && 'Error: max length is 4 chars';
-      //         },
-      //         function(val) {
-      //           return val.indexOf('lmao') === -1 && 'Error: needs lmao';
-      //         }
-      //       ]
-      //     },
-      //     embedded_field2: {
-      //       type: String,
-      //       enum: ['', 'embedded value 1', 'embedded value 2'],
-      //       label: 'Embedded Field 2'
-      //     }
-      //   },
-      //   label: 'Simple Object Field'
-      // },
-      // simple_array_field: {
-      //   type: [String],
-      //   label: 'Array of Strings',
-      //   isRequired: true,
-      //   defaultValue: ['ayy', 'lmao', 'welp', 'womp']
-      // },
-      // simple_object_array: {
-      //   type: [{
-      //     obj_arr_field1: {
-      //       type: String,
-      //       label: 'Object array field 1'
-      //     },
-      //     obj_arr_field2: {
-      //       type: String,
-      //       label: 'Object array field 2'
-      //     },
-      //     hidden_embedded_object_array: {
-      //       hidden: true,
-      //       defaultValue: [
-      //         { ayy: 'lmao' },
-      //         { lmao: 'ayy' }
-      //       ]
-      //     }
-      //   }],
-      //   label: 'Simple Object Array'
-      // },
+      simple_object_field: {
+        type: {
+          embedded_field1: {
+            type: String,
+            label: 'Embedded Field 1',
+            validators: [
+              function(val) {
+                return val.length > 4 && 'Error: max length is 4 chars';
+              },
+              function(val) {
+                return val.indexOf('lmao') === -1 && 'Error: needs lmao';
+              }
+            ]
+          },
+          embedded_field2: {
+            type: String,
+            enum: ['', 'embedded value 1', 'embedded value 2'],
+            label: 'Embedded Field 2'
+          }
+        },
+        label: 'Simple Object Field'
+      },
+      simple_array_field: {
+        type: [String],
+        label: 'Array of Strings',
+        isRequired: true,
+        defaultValue: ['ayy', 'lmao', 'welp', 'womp']
+      },
+      simple_object_array: {
+        type: [{
+          obj_arr_field1: {
+            type: String,
+            label: 'Object array field 1'
+          },
+          obj_arr_field2: {
+            type: String,
+            label: 'Object array field 2'
+          },
+          // hidden_embedded_object_array: {
+          //   hidden: true,
+          //   defaultValue: [
+          //     { ayy: 'lmao' },
+          //     { lmao: 'ayy' }
+          //   ]
+          // }
+        }],
+        defaultValue: [
+          { obj_arr_field1: 'lol',
+            obj_arr_field2: 'ayy' },
+          { obj_arr_field1: 'womp',
+            obj_arr_field2: 'welp' }
+        ],
+        label: 'Simple Object Array'
+      },
       // object_of_objects: {
       //   type: {
       //     flat_field1: {

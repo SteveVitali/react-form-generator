@@ -24,6 +24,7 @@ var FormGenerator = {
    * @return {Array} An array of JSX Input fields representing the schema
    */
   generate: function(schema, defaultValue, onChange) {
+    console.log('generate', schema);
     var fields = [];
     for (var key in schema) {
       var field = schema[key];
@@ -36,11 +37,12 @@ var FormGenerator = {
         if (field.type.length && field.type.length === 1) {
           // Array of native type like [String]
           // or [{ object: type, like: this }]
+          console.log('array field', field);
           fields.push(
             <ArrayField
               ref={key}
               label={field.label}
-              schema={field}
+              schema={field.type[0]}
               onChange={onChange}
               defaultValue={defaultVal}/>
           );
@@ -50,7 +52,7 @@ var FormGenerator = {
             <ObjectField
               ref={key}
               label={field.label}
-              schema={schema}
+              schema={field.type}
               onChange={onChange}
               defaultValue={defaultVal}/>
           );
