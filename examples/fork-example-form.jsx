@@ -68,114 +68,146 @@ var Example = React.createClass({
         isRequired: true,
         defaultValue: ['ayy', 'lmao', 'welp', 'womp']
       },
-      simple_object_array: {
-        type: [{
-          obj_arr_field1: {
-            type: String,
-            label: 'Object array field 1'
-          },
-          obj_arr_field2: {
-            type: String,
-            label: 'Object array field 2'
-          },
-          // hidden_embedded_object_array: {
-          //   hidden: true,
-          //   defaultValue: [
-          //     { ayy: 'lmao' },
-          //     { lmao: 'ayy' }
-          //   ]
-          // }
-        }],
-        defaultValue: [
-          { obj_arr_field1: 'lol',
-            obj_arr_field2: 'ayy' },
-          { obj_arr_field1: 'womp',
-            obj_arr_field2: 'welp' }
-        ],
-        label: 'Simple Object Array'
-      },
-      // object_of_objects: {
-      //   type: {
-      //     flat_field1: {
-      //       type: String,
-      //       label: 'Embedded string field'
-      //     },
-      //     embedded_object1: {
-      //       type: {
-      //         embedded_object_field1: {
-      //           type: String,
-      //           label: 'Embedded Object Field 1'
-      //         },
-      //         embedded_object_field2: {
-      //           type: String,
-      //           enum: [
-      //             'embedded object field value 1',
-      //             'embedded object field value 2'
-      //           ],
-      //           label: 'Embedded Object Field 2'
-      //         },
-      //         embedded_object_object: {
-      //           type: {
-      //             embedded_object_object_field: {
-      //               type: String,
-      //               label: 'Embedded object object field'
-      //             }
-      //           },
-      //           label: 'Embedded object object'
-      //         }
-      //       },
-      //       label: 'Embedded Object Field'
-      //     }
-      //   },
-      //   label: 'Object of Objects'
-      // },
-      // complex_object_array_field: {
+      // simple_object_array: {
       //   type: [{
-      //     flat_field: {
+      //     obj_arr_field1: {
       //       type: String,
-      //       label: 'Flat Object Array Field'
+      //       label: 'Object array field 1'
       //     },
-      //     object_field: {
-      //       type: {
-      //         object_array_object_field1: {
-      //           type: String,
-      //           label: 'Flat Object-Array Object-Field'
-      //         },
-      //         object_array_array_field: {
-      //           type: [{
-      //             object_array_object_array_field1: {
-      //               type: String,
-      //               label: 'Object-Array Object-Array Field 1'
-      //             },
-      //             object_array_object_array_field2: {
-      //               type: String,
-      //               label: 'Object-Array Object-Array Field 2'
-      //             }
-      //           }],
-      //           label: 'Object-Array Object-Array Field'
-      //         }
-      //       },
-      //       label: 'Object Array Object Field'
+      //     obj_arr_field2: {
+      //       type: String,
+      //       label: 'Object array field 2'
+      //     },
+      //     hidden_embedded_object_array: {
+      //       hidden: true,
+      //       defaultValue: [
+      //         { ayy: 'lmao' },
+      //         { lmao: 'ayy' }
+      //       ]
       //     }
       //   }],
-      //   label: 'Object Array'
+      //   defaultValue: [
+      //     { obj_arr_field1: 'lol',
+      //       obj_arr_field2: 'ayy' },
+      //     { obj_arr_field1: 'womp',
+      //       obj_arr_field2: 'welp' }
+      //   ],
+      //   label: 'Simple Object Array'
       // },
-      // hidden_object_array: {
-      //   hidden: true,
-      //   defaultValue: [{
-      //     ayy: 'lmao',
-      //     ayy: 'lmao'
-      //   }, {
-      //     lmao: 'ayy',
-      //     lmao: 'ayy'
-      //   }]
-      // }
+      object_of_objects: {
+        type: {
+          flat_field1: {
+            type: String,
+            label: 'Embedded string field'
+          },
+          embedded_object1: {
+            type: {
+              embedded_object_field1: {
+                type: String,
+                label: 'Embedded Object Field 1'
+              },
+              embedded_object_field2: {
+                type: String,
+                enum: [
+                  'embedded object field value 1',
+                  'embedded object field value 2'
+                ],
+                label: 'Embedded Object Field 2'
+              },
+              embedded_object_object: {
+                type: {
+                  embedded_object_object_field: {
+                    type: String,
+                    label: 'Embedded object object field'
+                  }
+                },
+                label: 'Embedded object object'
+              }
+            },
+            label: 'Embedded Object Field'
+          }
+        },
+        label: 'Object of Objects'
+      },
+    //   complex_object_array_field: {
+    //     type: [{
+    //       flat_field: {
+    //         type: String,
+    //         label: 'Flat Object Array Field'
+    //       },
+    //       object_field: {
+    //         type: {
+    //           object_array_object_field1: {
+    //             type: String,
+    //             label: 'Flat Object-Array Object-Field'
+    //           },
+    //           object_array_array_field: {
+    //             type: [{
+    //               object_array_object_array_field1: {
+    //                 type: String,
+    //                 label: 'Object-Array Object-Array Field 1'
+    //               },
+    //               object_array_object_array_field2: {
+    //                 type: String,
+    //                 label: 'Object-Array Object-Array Field 2'
+    //               }
+    //             }],
+    //             label: 'Object-Array Object-Array Field'
+    //           }
+    //         },
+    //         label: 'Object Array Object Field'
+    //       }
+    //     }],
+    //     label: 'Object Array',
+    //     defaultValue: [{
+    //       flat_field: 'flat field',
+    //       object_field: {
+    //         object_array_object_field1: 'object field',
+    //         object_array_array_field: [{
+    //           object_array_object_array_field1: 'ayyy',
+    //           object_array_object_array_field2: 'lmao'
+    //         }]
+    //       }
+    //     }]
+    //   },
+    //   hidden_object_array: {
+    //     hidden: true,
+    //     defaultValue: [{
+    //       ayy: 'lmao',
+    //       ayy: 'lmao'
+    //     }, {
+    //       lmao: 'ayy',
+    //       lmao: 'ayy'
+    //     }]
+    //   },
+    //   simple_array_of_arrays: {
+    //     type: [[{
+    //       welp: {
+    //         type: String,
+    //         label: 'lol'
+    //       }
+    //     }]],
+    //     label: 'Hm'
+    //   },
+    //   complex_array_of_arrays: {
+    //     type: [[[{
+    //       array_array_field: {
+    //         type: String,
+    //         label: 'Array Array Field'
+    //       },
+    //       array_array_array_array: {
+    //         type: [[String]],
+    //         label: 'Array Array Array Array'
+    //       }
+    //     }]]],
+    //     label: 'Complex Array of Arrays'
+    //   }
     },
     'myFormRef',
     function() {
       var myForm = that.refs.myFormRef;
       console.log('Submit clicked!');
-      console.log('Parsing form!', myForm.parse());
+      console.log('Parsing form!', myForm.getValue());
       // myForm.reset();
     });
   }

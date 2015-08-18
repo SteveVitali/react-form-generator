@@ -24,7 +24,15 @@ var FormGenerator = {
    * @return {Array} An array of JSX Input fields representing the schema
    */
   generate: function(schema, defaultValue, onChange) {
-    console.log('generate', schema);
+    // Special case for array schemas
+    if (_.isArray(schema)) {
+      return [
+        <ArrayField
+          ref={key}
+          schema={schema[0]}
+          onChange={onChange}/>
+      ];
+    }
     var fields = [];
     for (var key in schema) {
       var field = schema[key];
@@ -37,7 +45,6 @@ var FormGenerator = {
         if (field.type.length && field.type.length === 1) {
           // Array of native type like [String]
           // or [{ object: type, like: this }]
-          console.log('array field', field);
           fields.push(
             <ArrayField
               ref={key}
@@ -217,13 +224,20 @@ var FormGeneratorForm = React.createClass({
   },
 
   onChange: function() {
-    this.setState({
-      isValid: this.isValid()
-    });
+    var that = this;
+    setTimeout(function() {
+      that.setState({
+        isValid: that.isValid()
+      });
+    }, 100);
+  },
+
+  getValue: function() {
+    return this.refs.toplevelForm.getValue();
   },
 
   isValid: function() {
-    //return this.refs.toplevelForm.isValid();
+    return this.refs.toplevelForm.isValid();
   },
 
   reset: function() {
@@ -275,12 +289,19 @@ var ObjectField = React.createClass({
     });
   },
 
+  setValue: function(newValue) {
+    for (var key in this.props.schema) {
+      that.refs[key].setValue(newValue[key]);
+    }
+  },
+
   onChange: function() {
     this.props.onChange();
   },
 
   isValid: function() {
     var valid = true;
+    console.log('object refs', this.refs);
     for (var field in this.props.schema) {
       valid = valid && this.refs[field].isValid();
     }
@@ -349,11 +370,21 @@ var ArrayField = React.createClass({
     return values;
   },
 
+  setValue: function(values) {
+    var refs = this.refs;
+    var refPrefix = this.props.refPrefix;
+    _.each(values, function(value, i) {
+      refs[refPrefix + i].setValue(value);
+    });
+  },
+
   isValid: function() {
     var that = this;
     var refPrefix = this.props.refPrefix;
     var valid = true;
+    console.log('array refs', this.refs);
     _.times(this.state.size, function(i) {
+      console.log('validating ref', refPrefix + i);
       valid = valid && that.refs[refPrefix + i].isValid();
     });
     return valid;
@@ -489,7 +520,7 @@ var FlatField = React.createClass({
   },
 
   isValid: function() {
-    return !!this.validate(this.getValue()).length;
+    return !this.validate(this.getValue()).length;
   },
 
   getValue: function() {
@@ -503,8 +534,7 @@ var FlatField = React.createClass({
     this.setState({
       value: newValue,
       errorMessages: errorMessages
-    });
-    this.props.onChange();
+    }, this.props.onChange);
   },
 
   reset: function() {
