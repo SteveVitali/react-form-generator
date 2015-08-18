@@ -68,32 +68,32 @@ var Example = React.createClass({
         isRequired: true,
         defaultValue: ['ayy', 'lmao', 'welp', 'womp']
       },
-      // simple_object_array: {
-      //   type: [{
-      //     obj_arr_field1: {
-      //       type: String,
-      //       label: 'Object array field 1'
-      //     },
-      //     obj_arr_field2: {
-      //       type: String,
-      //       label: 'Object array field 2'
-      //     },
-      //     hidden_embedded_object_array: {
-      //       hidden: true,
-      //       defaultValue: [
-      //         { ayy: 'lmao' },
-      //         { lmao: 'ayy' }
-      //       ]
-      //     }
-      //   }],
-      //   defaultValue: [
-      //     { obj_arr_field1: 'lol',
-      //       obj_arr_field2: 'ayy' },
-      //     { obj_arr_field1: 'womp',
-      //       obj_arr_field2: 'welp' }
-      //   ],
-      //   label: 'Simple Object Array'
-      // },
+      simple_object_array: {
+        type: [{
+          obj_arr_field1: {
+            type: String,
+            label: 'Object array field 1'
+          },
+          obj_arr_field2: {
+            type: String,
+            label: 'Object array field 2'
+          },
+          hidden_embedded_object_array: {
+            hidden: true,
+            defaultValue: [
+              { ayy: 'lmao' },
+              { lmao: 'ayy' }
+            ]
+          }
+        }],
+        defaultValue: [
+          { obj_arr_field1: 'lol',
+            obj_arr_field2: 'ayy' },
+          { obj_arr_field1: 'womp',
+            obj_arr_field2: 'welp' }
+        ],
+        label: 'Simple Object Array'
+      },
       object_of_objects: {
         type: {
           flat_field1: {

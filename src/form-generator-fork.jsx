@@ -415,6 +415,7 @@ var ArrayField = React.createClass({
     _.times(this.state.size, function(i) {
       var defaultVal = (defaultValue && defaultValue[i]) || '';
       var fieldRef = refPrefix + i;
+      console.log('array fieldRef', fieldRef);
       // Flat/native type
       if (typeof schema === 'function') {
         var mockSchema = {
@@ -428,8 +429,10 @@ var ArrayField = React.createClass({
         );
       } else {
         // It's an object or an object array, so use 'generate'
+        var schemaWrapper = {};
+        schemaWrapper[fieldRef] = { type: schema };
         arrayFields.push(
-          FormGenerator.generate(schema, defaultVal, onChange)
+          FormGenerator.generate(schemaWrapper, defaultVal, onChange)
         );
       }
     });
