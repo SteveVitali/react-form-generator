@@ -6,13 +6,23 @@ var Example = React.createClass({
       defaultValue: 'Welp',
       validators: [
           FormGenerator.validators.minLength(1),
-          FormGenerator.validators.maxLength(10)
+          FormGenerator.validators.maxLength(10),
+          function(val) {
+            if (val.toLowerCase().indexOf('welp') === -1) {
+              return 'Error: input must contain "welp"';
+            }
+          }
       ],
       isRequired: true
     },
     numberField: {
       type: Number,
-      label: 'Number Field'
+      label: 'Number Field',
+      validate: function(val) {
+        if (val % 10 !== 0) {
+          return 'Error: input must be divisible by 10';
+        }
+      }
     },
     enumField: {
       type: String,

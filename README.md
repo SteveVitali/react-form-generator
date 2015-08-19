@@ -5,7 +5,7 @@ Generate, validate, and parse React forms based on arbitrary JSON schemas.
 Usage
 ---
 ```js
-var ExampleForm = React.createClass({
+var Example = React.createClass({
   schema: {
     stringField: {
       type: String,
@@ -13,13 +13,23 @@ var ExampleForm = React.createClass({
       defaultValue: 'Welp',
       validators: [
           FormGenerator.validators.minLength(1),
-          FormGenerator.validators.maxLength(10)
+          FormGenerator.validators.maxLength(10),
+          function(val) {
+            if (val.toLowerCase().indexOf('welp') === -1) {
+              return 'Error: input must contain "welp"';
+            }
+          }
       ],
       isRequired: true
     },
     numberField: {
       type: Number,
-      label: 'Number Field'
+      label: 'Number Field',
+      validate: function(val) {
+        if (val % 10 !== 0) {
+          return 'Error: input must be divisible by 10';
+        }
+      }
     },
     enumField: {
       type: String,
