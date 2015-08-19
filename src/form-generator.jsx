@@ -233,6 +233,11 @@ var FormGeneratorForm = React.createClass({
     }, 100);
   },
 
+  onSubmit: function() {
+    var onSubmit = this.props.onSubmit;
+    onSubmit && onSubmit(this.getValue());
+  },
+
   getValue: function() {
     return this.refs.toplevelForm.getValue();
   },
@@ -260,7 +265,7 @@ var FormGeneratorForm = React.createClass({
         <br/>
         <ReactBootstrap.Button
           bSize='large'
-          onClick={this.props.onSubmit}
+          onClick={this.onSubmit}
           disabled={!this.state.isValid}>
           Submit
         </ReactBootstrap.Button>
