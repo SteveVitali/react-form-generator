@@ -24,7 +24,6 @@ var FormGenerator = {
    * @return {Array} An array of JSX Input fields representing the schema
    */
   generate: function(schema, defaultValue, onChange) {
-    console.log('generate', schema, defaultValue);
     // Special case for array schemas
     if (_.isArray(schema)) {
       return [
@@ -262,7 +261,6 @@ var FormGeneratorForm = React.createClass({
           defaultValue={this.props.defaultValue}
           label={this.props.label}
           onChange={this.onChange}/>
-        <br/>
         <ReactBootstrap.Button
           bSize='large'
           onClick={this.onSubmit}

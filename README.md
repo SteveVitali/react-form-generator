@@ -5,7 +5,7 @@ Generate, validate, and parse React forms based on arbitrary JSON schemas.
 Usage
 ---
 ```js
-var Example = React.createClass({
+var ExampleForm = React.createClass({
   schema: {
     stringField: {
       type: String,
@@ -36,6 +36,10 @@ var Example = React.createClass({
       type: [String],
       label: 'Simple Array Field'
     },
+    hiddenField: {
+      hidden: true,
+      defaultValue: 'Hidden Field Data'
+    },
     objectField: {
       type: {
         embeddedString: {
@@ -46,6 +50,13 @@ var Example = React.createClass({
           type: [String],
           label: 'Embedded Array',
           defaultValue: ['array value 1', 'array value 2']
+        },
+        embeddedHiddenObjectArray: {
+          hidden: true,
+          defaultValue: [{
+            hiddenFieldData: 'Hidden field data',
+            moreHiddenData: 'More hidden data'
+          }]
         }
       },
       label: 'Object Field'
