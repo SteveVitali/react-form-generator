@@ -212,7 +212,7 @@ var Example = React.createClass({
       var myForm = that.refs.myFormRef;
       console.log('Submit clicked!');
       console.log('Parsing form!', myForm.getValue());
-      // myForm.reset();
+      myForm.reset();
     });
   }
 });

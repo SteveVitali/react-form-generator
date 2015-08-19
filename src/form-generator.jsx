@@ -24,6 +24,7 @@ var FormGenerator = {
    * @return {Array} An array of JSX Input fields representing the schema
    */
   generate: function(schema, defaultValue, onChange) {
+    console.log('generate', schema, defaultValue);
     // Special case for array schemas
     if (_.isArray(schema)) {
       return [
@@ -236,12 +237,16 @@ var FormGeneratorForm = React.createClass({
     return this.refs.toplevelForm.getValue();
   },
 
-  isValid: function() {
-    return this.refs.toplevelForm.isValid();
+  setValue: function(val) {
+    this.refs.toplevelForm.setValue(val);
   },
 
   reset: function() {
-    throw 'Reset unimplemented';
+    this.refs.toplevelForm.reset();
+  },
+
+  isValid: function() {
+    return this.refs.toplevelForm.isValid();
   },
 
   render: function() {
@@ -295,23 +300,22 @@ var ObjectField = React.createClass({
     }
   },
 
+  reset: function() {
+    for (var field in this.props.schema) {
+      this.refs[field].reset();
+    }
+  },
+
   onChange: function() {
     this.props.onChange();
   },
 
   isValid: function() {
     var valid = true;
-    console.log('object refs', this.refs);
     for (var field in this.props.schema) {
       valid = valid && this.refs[field].isValid();
     }
     return valid;
-  },
-
-  reset: function() {
-    for (var field in this.props.schema) {
-      this.refs[field].reset();
-    }
   },
 
   render: function() {
@@ -372,19 +376,26 @@ var ArrayField = React.createClass({
 
   setValue: function(values) {
     var refs = this.refs;
-    var refPrefix = this.props.refPrefix;
-    _.each(values, function(value, i) {
-      refs[refPrefix + i].setValue(value);
+    this.setState({
+      size: values.length || 1
+    },
+    function() {
+      var refPrefix = this.props.refPrefix;
+      _.each(values, function(value, i) {
+        refs[refPrefix + i].setValue(value);
+      });
     });
+  },
+
+  reset: function() {
+    this.setValue(this.props.defaultValue);
   },
 
   isValid: function() {
     var that = this;
     var refPrefix = this.props.refPrefix;
     var valid = true;
-    console.log('array refs', this.refs);
     _.times(this.state.size, function(i) {
-      console.log('validating ref', refPrefix + i);
       valid = valid && that.refs[refPrefix + i].isValid();
     });
     return valid;
@@ -415,7 +426,6 @@ var ArrayField = React.createClass({
     _.times(this.state.size, function(i) {
       var defaultVal = (defaultValue && defaultValue[i]) || '';
       var fieldRef = refPrefix + i;
-      console.log('array fieldRef', fieldRef);
       // Flat/native type
       if (typeof schema === 'function') {
         var mockSchema = {
