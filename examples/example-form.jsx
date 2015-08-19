@@ -73,13 +73,15 @@ var Example = React.createClass({
         embeddedEnum: {
           type: Number,
           enum: [1, 2, 3, 4],
-          defaultValue: 3
+          defaultValue: 3,
+          label: 'Enum Field'
         }
       }],
       label: 'Array of Objects Field'
     },
     arrayOfArraysField: {
       type: [[String]],
+      defaultValue: [['1', '2'], ['3', '4']],
       label: 'Array of Array of Strings'
     },
     arrayOfArrayOfArrayOfObjectsField: {
@@ -93,6 +95,23 @@ var Example = React.createClass({
           label: 'Array of Numbers'
         }
       }]]],
+      defaultValue: [
+        [
+          [{
+            stringField: 'String 1',
+            arrayField: [1, 2]
+          },
+          { stringField: 'String 2',
+            arrayField: [3, 4]
+          }]
+        ],
+        [
+          [{
+            stringField: 'String 3',
+            arrayField: [5, 6]
+          }]
+        ]
+      ],
       label: 'Array of Array of Array of Objects'
     }
   },

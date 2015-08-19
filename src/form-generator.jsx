@@ -433,7 +433,8 @@ var ArrayField = React.createClass({
       if (typeof schema === 'function') {
         var mockSchema = {
           type: schema,
-          label: that.props.label
+          label: that.props.label,
+          defaultValue: defaultVal
         };
         arrayFields.push(
           FormGenerator.generateFlatField(
@@ -443,7 +444,10 @@ var ArrayField = React.createClass({
       } else {
         // It's an object or an object array, so use 'generate'
         var schemaWrapper = {};
-        schemaWrapper[fieldRef] = { type: schema };
+        schemaWrapper[fieldRef] = {
+          type: schema,
+          defaultValue: defaultVal
+        };
         arrayFields.push(
           FormGenerator.generate(schemaWrapper, defaultVal, onChange)
         );
