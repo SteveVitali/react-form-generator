@@ -2,7 +2,7 @@
   "name": "react-form-generator",
   "version": "1.0.0",
   "authors": [
-    "Steve Vitali <svitali@seas.upenn.edu>"
+    "Steve Vitali <svitali@seas.upenn.edu> (http://stevevitali.me/)"
   ],
   "description": "Generate, validate, and parse React forms using Mongoose-inspired JSON form schemas",
   "keywords": [

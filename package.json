@@ -2,10 +2,7 @@
   "name": "react-form-generator",
   "version": "1.0.0",
   "description": "Generate, validate, and parse React forms based on arbitrary JSON schemas.",
-  "main": "index.js",
-  "directories": {
-    "example": "examples"
-  },
+  "main": "src/form-generator.jsx",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,7 +10,7 @@
     "type": "git",
     "url": "https://github.com/SteveVitali/react-form-generator.git"
   },
-  "author": "Steve Vitali",
+  "author": "Steve Vitali <svitali@seas.upenn.edu> (http://stevevitali.me/)",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/SteveVitali/react-form-generator/issues"
