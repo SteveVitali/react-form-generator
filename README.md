@@ -2,6 +2,16 @@
 
 Generate, validate, and parse React forms based on arbitrary JSON schemas. 
 
+
+### Demo
+To run the demo app, navigate to the `/demo` directory and run:
+```
+npm install
+bower install
+npm start
+open http://localhost:3000
+```
+
 ### Usage
 To instantiate a FormGeneratorForm component, just call
 ```js
