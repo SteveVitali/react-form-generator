@@ -1,9 +1,63 @@
-react-form-generator
----
+## react-form-generator
+
 Generate, validate, and parse React forms based on arbitrary JSON schemas. 
 
-Usage
----
+### Usage
+To instantiate a FormGeneratorForm component, just call
+```js
+FormGenerator.create(<formSchema>, <ref>, <onSubmit>);
+```
+- `formSchema` is a JSON schema for the form
+- `ref` is the ref-string for the FormGeneratorForm
+- `onSubmit` is the submission callback for the form, whose first parameter is an object in the same form as the initial schema, but with the form data filled in where the form field definitions were previously.
+
+### Form Schema Options
+A valid form schema is just an object of the form
+```js
+var schema = {
+  fieldName1: <FormField>,
+  fieldName2: <FormField>,
+  ...
+};
+```
+Where `FormField` values are objects with metadata describing a field's type, along with additional metadata for things like default values, validation, labels, and the like. 
+
+#### `FormField` Options
+A valid `FormField` object must have a `type` attribute (with the exception of hidden fields) and can contain additional metadata.
+
+##### `FormField` `type` Options
+- `String`
+- `Number`
+- `Boolean`
+- `[String]`
+- `[Number]`
+- `[Boolean]`
+- `[<FormField>]`
+- `{ objectField: <FormField>, ... }`
+- `[{ objectField: <FormField>, ... }]`
+
+Note how in the last three type examples, we define `FormField`'s recursively as objects or arrays of arbitrarily-nested `FormField`'s, which can have all of the same metadata as top-level fields (like default values, validators, etc.). 
+
+#### Additional `FormField` Options
+- `enum`: for `Number` and `String` fields, you can define an `enum` array that is rendered as a `<select>` tag. 
+- `label`: the label for a particular field
+- `defaultValue`: a default value for the field. This works for primitive types, arrays, objects, and arrays of objects/arrays. Note that for recursive `FormField` definitions, the more deeply nested `defaultValue`'s will take precedence.
+- `isRequired`: if true, it will automatically validate using the `FormGenerator.validators.nonEmpty` validator.
+- `hidden`: if true, the field will be hidden from the form view, but its `defaultValue` will show up in the parsed form data after submission. Note that hidden fields do not need to have a `type`. 
+- `validate`: a validator function whose first argument is the value of the field after an onChange event and whose return value is some error message in case where the value does not pass some predicate test. 
+- `validators`: the same as `validate` but for multiple validators.
+
+#### `FormField` Validators
+
+Here is a list of currently built-in validator-generators, located in the `FormGenerator.validators` object. Each one returns a validator function that takes in a field's current value after an `onChange` event and returns an error message if some predicate test fails.
+- `lengthEquals(len)`: validates that length equals `len`
+- `minLength(len)`: validates length is at least `len`
+- `maxLength(len)`: validates length is at most `len`
+- `regex(expr)`: validates that the field matches the regular expression `expr`
+- `nonEmpty()`: validates that field is not empty
+- `number()`: validates that field is a number
+
+### Example
 ```js
 var Example = React.createClass({
   schema: {
