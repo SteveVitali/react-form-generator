@@ -131,3 +131,9 @@ var Example = React.createClass({
     return <span>{formElement}</span>;
   }
 });
+
+$(document).ready(function() {
+  var rootParent = document.getElementById('example-root');
+  var rootNode = React.createElement(Example, {}, rootParent);
+  React.render(rootNode, rootParent);
+});

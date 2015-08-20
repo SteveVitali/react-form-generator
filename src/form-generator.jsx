@@ -298,8 +298,9 @@ var ObjectField = React.createClass({
   },
 
   setValue: function(newValue) {
+    var refs = this.refs;
     for (var key in this.props.schema) {
-      that.refs[key].setValue(newValue[key]);
+      refs[key].setValue(newValue[key]);
     }
   },
 
