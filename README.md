@@ -36,20 +36,20 @@ A valid `FormField` object must have a `type` attribute (with the exception of h
 - `{ objectField: <FormField>, ... }`
 - `[{ objectField: <FormField>, ... }]`
 
-Note how in the last three type examples, we define `FormField`'s recursively as objects or arrays of arbitrarily-nested `FormField`'s, which can have all of the same metadata as top-level fields (like default values, validators, etc.). 
+Note how in the last three type examples, we define `FormField`'s recursively as objects or arrays of arbitrarily-nested `FormField`'s, each of which can have all of the same metadata as top-level fields (like default values, validators, etc.). 
 
 #### Additional `FormField` Options
-- `enum`: for `Number` and `String` fields, you can define an `enum` array that is rendered as a `<select>` tag. 
-- `label`: the label for a particular field
+- `enum`: for `Number` and `String` fields, you can add an `enum` attribute that equals an array of allowed values. Adding an `enum` attribute will render the field as a `<select>` tag. 
+- `label`: the label for a particular field in the form view.
 - `defaultValue`: a default value for the field. This works for primitive types, arrays, objects, and arrays of objects/arrays. Note that for recursive `FormField` definitions, the more deeply nested `defaultValue`'s will take precedence.
 - `isRequired`: if true, it will automatically validate using the `FormGenerator.validators.nonEmpty` validator.
 - `hidden`: if true, the field will be hidden from the form view, but its `defaultValue` will show up in the parsed form data after submission. Note that hidden fields do not need to have a `type`. 
-- `validate`: a validator function whose first argument is the value of the field after an onChange event and whose return value is some error message in case where the value does not pass some predicate test. 
+- `validate`: a validator function whose first argument is the value of the field at the time of validation and whose return value is some error message in case where the value does not pass some predicate test. 
 - `validators`: the same as `validate` but for multiple validators.
 
 #### `FormField` Validators
 
-Here is a list of currently built-in validator-generators, located in the `FormGenerator.validators` object. Each one returns a validator function that takes in a field's current value after an `onChange` event and returns an error message if some predicate test fails.
+Here is a list of currently built-in validator-generators, located in the `FormGenerator.validators` object. Each one returns a validator function that takes in a field's current value at the time of invokation and returns an error message (which is then rendered in the form view) if some predicate test fails.
 - `lengthEquals(len)`: validates that length equals `len`
 - `minLength(len)`: validates length is at least `len`
 - `maxLength(len)`: validates length is at most `len`
