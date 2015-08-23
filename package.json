@@ -11,7 +11,7 @@
     "url": "https://github.com/SteveVitali/react-form-generator.git"
   },
   "author": "Steve Vitali <svitali@seas.upenn.edu> (http://stevevitali.me/)",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/SteveVitali/react-form-generator/issues"
   },
