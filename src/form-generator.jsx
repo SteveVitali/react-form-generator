@@ -1,3 +1,6 @@
+var React = require('react');
+var ReactBootstrap = require('react-bootstrap');
+
 var FormGenerator = {
   /**
    * This creates a new FormGenerator form based on the schema
@@ -143,7 +146,16 @@ var FormGenerator = {
       );
     }
     else if (field.type === Date) {
-      throw 'Date types unimplemented';
+      return (
+        <FlatField
+          type='date'
+          label={field.label}
+          ref={name}
+          defaultValue={defaultValue}
+          validators={validators}
+          onChange={onChange}
+          isRequired={field.isRequired}/>
+      );
     }
     else {
       throw 'Unsupported type';
@@ -617,8 +629,11 @@ var FlatField = React.createClass({
             {that.props.children}
           </ReactBootstrap.Input>
         );
+        case 'date': throw 'Unimplemented';
         case 'hidden': return null;
       }
     })(this);
   }
 });
+
+module.exports = FormGenerator;
