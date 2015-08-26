@@ -1,3 +1,8 @@
+/** @jsx React.DOM */
+var $ = require('jquery');
+var React = require('react');
+var FormGenerator = require('form-generator-react');
+
 var Example = React.createClass({
   schema: {
     stringField: {
@@ -24,6 +29,10 @@ var Example = React.createClass({
         }
       }
     },
+    // dateField: {
+    //   type: Date,
+    //   label: 'Date Field'
+    // },
     enumField: {
       type: String,
       enum: ['', 'option 1', 'option 2'],
