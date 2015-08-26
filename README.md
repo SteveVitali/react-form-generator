@@ -1,12 +1,16 @@
-## react-form-generator
+[npm-stats]: https://nodei.co/npm/form-generator-react.png?compact=true
+[npm-url]: https://www.npmjs.org/package/form-generator-react
+
+# react-form-generator
+[![NPM version][npm-stats]][npm-url]
 
 Generate, validate, and parse React forms based on arbitrary JSON schemas. 
 
 ### Installation
 
-`bower install --save react-form-generator`
-
 `npm install --save form-generator-react`
+
+`bower install --save react-form-generator`
 
 Or download from this repo and use globally (FormGenerator) or with RequireJS
 
