@@ -1,3 +1,8 @@
+[npm-stats]: https://nodei.co/npm/form-generator-react.png?compact=true
+[npm-url]: https://www.npmjs.org/package/form-generator-react
+
+[![NPM version][npm-stats]][npm-url]
+
 ## react-form-generator
 
 Generate, validate, and parse React forms based on arbitrary JSON schemas. 
