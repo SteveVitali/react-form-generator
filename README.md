@@ -31,7 +31,7 @@ open http://localhost:3000
 ```
 
 ### Usage
-To instantiate a FormGeneratorForm component, just call
+To instantiate a FormGeneratorForm component, use `FormGenerator.create`:
 ```js
 FormGenerator.create(<formSchema>, <ref>, <onSubmit>);
 ```
