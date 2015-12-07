@@ -1,6 +1,6 @@
 {
   "name": "form-generator-react",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Generate, validate, and parse React forms based on arbitrary JSON schemas.",
   "main": "index.js",
   "browserify": {"transform": ["reactify"]},
