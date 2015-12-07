@@ -9,6 +9,8 @@ var concat = require('gulp-concat');
 gulp.task('build-global', function() {
   gulp.src('src/*.jsx')
     .pipe(react())
+    .pipe(concat('form-generator.js'))
+    .pipe(gulp.dest('dist'))
     .pipe(replace(
       'module.exports = FormGenerator',
       'window.FormGenerator = FormGenerator'

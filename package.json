@@ -1,8 +1,8 @@
 {
   "name": "form-generator-react",
-  "version": "1.0.4",
+  "version": "1.0.7",
   "description": "Generate, validate, and parse React forms based on arbitrary JSON schemas.",
-  "main": "src/form-generator.jsx",
+  "main": "index.js",
   "browserify": {"transform": ["reactify"]},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
