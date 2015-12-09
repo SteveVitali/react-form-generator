@@ -9,14 +9,16 @@ var FormGenerator = {
    * @param  {Object} schema The mongoose-esque form schema
    * @param  {String} ref    The ref of the resultant JSX form
    * @param  {Function} onSubmit What do do on submission
+   * @param  {Boolean} validateOnSubmit Wait until submit to validate
    * @return {JSX} The FormGeneratorForm for this schema
    */
-  create: function(schema, ref, onSubmit) {
+  create: function(schema, ref, onSubmit, validateOnSubmit) {
     return (
       React.createElement(FormGeneratorForm, {
         schema: schema, 
         ref: ref, 
-        onSubmit: onSubmit})
+        onSubmit: onSubmit, 
+        validateOnSubmit: validateOnSubmit})
     );
   },
 
@@ -25,9 +27,10 @@ var FormGenerator = {
    * @param  {Schema}   schema     A mongoose-yform schema
    * @param  {Any}      defaultValue The default value for this field
    * @param  {Function} onChange   Function to run any time a field changes
+   * @param  {Boolean} validateOnSubmit Wait until submit to validate
    * @return {Array} An array of JSX Input fields representing the schema
    */
-  generate: function(schema, defaultValue, onChange) {
+  generate: function(schema, defaultValue, onChange, validateOnSubmit) {
     // Special case for array schemas
     if (_.isArray(schema)) {
       return [
@@ -55,7 +58,8 @@ var FormGenerator = {
               label: field.label, 
               schema: field.type[0], 
               onChange: onChange, 
-              defaultValue: defaultVal})
+              defaultValue: defaultVal, 
+              validateOnSubmit: validateOnSubmit})
           );
         } else {
           // Regular { embedded: object }
@@ -65,13 +69,16 @@ var FormGenerator = {
               label: field.label, 
               schema: field.type, 
               onChange: onChange, 
-              defaultValue: defaultVal})
+              defaultValue: defaultVal, 
+              validateOnSubmit: validateOnSubmit})
           );
         }
       } else {
         // Flat field
         fields.push(
-          this.generateFlatField(key, field, defaultVal, onChange)
+          this.generateFlatField(
+            key, field, defaultVal, onChange, validateOnSubmit
+          )
         );
       }
     }
@@ -84,9 +91,10 @@ var FormGenerator = {
    * @param  {Object}   field    The Field object
    * @param  {String}   defaultValue The default value for this field
    * @param  {Function} onChange Function to run any time a field changes
+   * @param  {Boolean} validateOnSubmit Wait until submit to validate
    * @return {JSX}      A JSX representation of the field
    */
-  generateFlatField: function(name, field, defaultValue, onChange) {
+  generateFlatField: function(name, field, defaultValue, onChange, validateOnSubmit) {
     var validators =
       field.validators || (field.validate && [field.validate]) || [];
 
@@ -116,13 +124,14 @@ var FormGenerator = {
             
             validators: validators, 
             onChange: onChange, 
-            isRequired: field.isRequired})
+            isRequired: field.isRequired, 
+            validateOnSubmit: validateOnSubmit})
         );
       }
       else {
         return (
           React.createElement(FlatField, {
-            type: "text", 
+            type: field.isPassword ? 'password' : 'text', 
             ref: name, 
             label: field.label, 
             placeholder: field.label || '', 
@@ -130,7 +139,8 @@ var FormGenerator = {
             validators: validators, 
             onChange: onChange, 
             isRequired: field.isRequired, 
-            isNumerical: field.type === Number})
+            isNumerical: field.type === Number, 
+            validateOnSubmit: validateOnSubmit})
         );
       }
     }
@@ -143,7 +153,8 @@ var FormGenerator = {
           defaultValue: defaultValue, 
           validators: validators, 
           onChange: onChange, 
-          isRequired: field.isRequired})
+          isRequired: field.isRequired, 
+          validateOnSubmit: validateOnSubmit})
       );
     }
     else if (field.type === Date) {
@@ -155,7 +166,8 @@ var FormGenerator = {
           defaultValue: defaultValue, 
           validators: validators, 
           onChange: onChange, 
-          isRequired: field.isRequired})
+          isRequired: field.isRequired, 
+          validateOnSubmit: validateOnSubmit})
       );
     }
     else {
@@ -220,7 +232,8 @@ var FormGeneratorForm = React.createClass({displayName: "FormGeneratorForm",
     schema: React.PropTypes.object.isRequired,
     onSubmit: React.PropTypes.func,
     defaultValue: React.PropTypes.object,
-    label: React.PropTypes.string
+    label: React.PropTypes.string,
+    validateOnSubmit: React.PropTypes.bool
   },
 
   getDefaultProps: function() {
@@ -232,7 +245,8 @@ var FormGeneratorForm = React.createClass({displayName: "FormGeneratorForm",
 
   getInitialState: function() {
     return {
-      isValid: true
+      isValid: true,
+      validateOnSubmit: this.props.validateOnSubmit
     };
   },
 
@@ -246,6 +260,11 @@ var FormGeneratorForm = React.createClass({displayName: "FormGeneratorForm",
   },
 
   onSubmit: function() {
+    if (this.state.validateOnSubmit && !this.state.isValid) {
+      return this.setState({
+        validateOnSubmit: false
+      }, this.showErrorMessages);
+    }
     var onSubmit = this.props.onSubmit;
     onSubmit && onSubmit(this.getValue());
   },
@@ -266,18 +285,28 @@ var FormGeneratorForm = React.createClass({displayName: "FormGeneratorForm",
     return this.refs.toplevelForm.isValid();
   },
 
+  showErrorMessages: function() {
+    this.refs.toplevelForm.showErrorMessages();
+  },
+
   render: function() {
+    console.log('rendering', this.state.validateOnSubmit);
+    var buttonDisabled = this.state.validateOnSubmit
+      ? false
+      : !this.state.isValid;
+
     return (
       React.createElement("form", null, 
         React.createElement(ObjectField, {ref: "toplevelForm", 
           schema: this.props.schema, 
           defaultValue: this.props.defaultValue, 
           label: this.props.label, 
-          onChange: this.onChange}), 
+          onChange: this.onChange, 
+          validateOnSubmit: this.state.validateOnSubmit}), 
         React.createElement(ReactBootstrap.Button, {
           bSize: "large", 
           onClick: this.onSubmit, 
-          disabled: !this.state.isValid}, 
+          disabled: buttonDisabled}, 
           "Submit"
         )
       )
@@ -290,7 +319,8 @@ var ObjectField = React.createClass({displayName: "ObjectField",
     schema: React.PropTypes.object.isRequired,
     onChange: React.PropTypes.func.isRequired,
     label: React.PropTypes.string,
-    defaultValue: React.PropTypes.object
+    defaultValue: React.PropTypes.object,
+    validateOnSubmit: React.PropTypes.bool
   },
 
   getDefaultProps: function() {
@@ -335,12 +365,19 @@ var ObjectField = React.createClass({displayName: "ObjectField",
     return valid;
   },
 
-  render: function() {
-    var schema = this.props.schema;
-    var onChange = this.props.onChange;
-    var defaultValue = this.props.defaultValue;
-    var subFields = FormGenerator.generate(schema, defaultValue, onChange);
+  showErrorMessages: function() {
+    for (var field in this.props.schema) {
+      this.refs[field].showErrorMessages();
+    }
+  },
 
+  render: function() {
+    var subFields = FormGenerator.generate(
+      this.props.schema,
+      this.props.defaultValue,
+      this.props.onChange,
+      this.props.validateOnSubmit
+    );
     return (
       React.createElement(ReactBootstrap.Panel, {header: this.props.label}, 
         subFields
@@ -357,7 +394,8 @@ var ArrayField = React.createClass({displayName: "ArrayField",
     ]).isRequired,
     onChange: React.PropTypes.func.isRequired,
     label: React.PropTypes.string,
-    initialLength: React.PropTypes.number
+    initialLength: React.PropTypes.number,
+    validateOnSubmit: React.PropTypes.bool
   },
 
   getDefaultProps: function() {
@@ -418,6 +456,14 @@ var ArrayField = React.createClass({displayName: "ArrayField",
     return valid;
   },
 
+  showErrorMessages: function() {
+    var that = this;
+    var refPrefix = this.props.refPrefix;
+    _.times(this.state.size, function(i) {
+      that.refs[refPrefix + i].showErrorMessages();
+    });
+  },
+
   addField: function() {
     this.setState({
       size: this.state.size + 1
@@ -438,6 +484,7 @@ var ArrayField = React.createClass({displayName: "ArrayField",
     var refPrefix = this.props.refPrefix;
     var defaultValue = this.props.defaultValue;
     var onChange = this.props.onChange;
+    var validateOnSubmit = this.props.validateOnSubmit;
 
     var arrayFields = [];
     _.times(this.state.size, function(i) {
@@ -452,7 +499,7 @@ var ArrayField = React.createClass({displayName: "ArrayField",
         };
         arrayFields.push(
           FormGenerator.generateFlatField(
-            fieldRef, mockSchema, defaultVal, onChange
+            fieldRef, mockSchema, defaultVal, onChange, validateOnSubmit
           )
         );
       } else {
@@ -463,7 +510,9 @@ var ArrayField = React.createClass({displayName: "ArrayField",
           defaultValue: defaultVal
         };
         arrayFields.push(
-          FormGenerator.generate(schemaWrapper, defaultVal, onChange)
+          FormGenerator.generate(
+            schemaWrapper, defaultVal, onChange, validateOnSubmit
+          )
         );
       }
     });
@@ -500,7 +549,9 @@ var FlatField = React.createClass({displayName: "FlatField",
     validators: React.PropTypes.arrayOf(React.PropTypes.func),
     onChange: React.PropTypes.func,
     isRequired: React.PropTypes.bool,
-    isNumerical: React.PropTypes.bool
+    isNumerical: React.PropTypes.bool,
+    isPassword: React.PropTypes.bool,
+    validateOnSubmit: React.PropTypes.bool
   },
 
   getDefaultProps: function() {
@@ -525,8 +576,9 @@ var FlatField = React.createClass({displayName: "FlatField",
   },
 
   componentDidMount: function() {
-    var errorMessages = this.validate(this.getValue());
-    var isValid = !errorMessages.length;
+    var errorMessages = this.props.validateOnSubmit
+      ? []
+      : this.validate(this.getValue());
 
     this.setState({
       errorMessages: errorMessages
@@ -557,13 +609,20 @@ var FlatField = React.createClass({displayName: "FlatField",
     return !this.validate(this.getValue()).length;
   },
 
+  showErrorMessages: function() {
+    this.setState({
+      errorMessages: this.validate(this.getValue())
+    });
+  },
+
   getValue: function() {
     return this.state.value;
   },
 
   setValue: function(newValue) {
-    var errorMessages = this.validate(newValue);
-    var isValid = !errorMessages.length;
+    var errorMessages = this.props.validateOnSubmit
+      ? []
+      : this.validate(this.getValue());
 
     this.setState({
       value: newValue,
@@ -592,7 +651,8 @@ var FlatField = React.createClass({displayName: "FlatField",
 
     return (function(that) {
       switch (that.props.type) {
-        case 'text': return (
+        case 'text':
+        case 'password': return (
           React.createElement("div", {className: 'form-group' + errorClass}, 
             React.createElement("label", {className: "control-label"}, 
               that.props.label
