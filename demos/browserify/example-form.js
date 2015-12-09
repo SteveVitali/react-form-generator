@@ -20,6 +20,12 @@ var Example = React.createClass({
       ],
       isRequired: true
     },
+    passwordField: {
+      type: String,
+      label: 'Password Field',
+      isPassword: true,
+      isRequired: true
+    },
     numberField: {
       type: Number,
       label: 'Number Field',
