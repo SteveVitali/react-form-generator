@@ -290,7 +290,6 @@ var FormGeneratorForm = React.createClass({displayName: "FormGeneratorForm",
   },
 
   render: function() {
-    console.log('rendering', this.state.validateOnSubmit);
     var buttonDisabled = this.state.validateOnSubmit
       ? false
       : !this.state.isValid;
