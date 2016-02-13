@@ -109,6 +109,8 @@ var FormGenerator = {
 
     if (field.type === String || field.type === Number) {
       if (field.enum) {
+        var enumArray = _.isArray(field.enum);
+
         return (
           React.createElement(FlatField, {
             type: "select", 
@@ -116,9 +118,9 @@ var FormGenerator = {
             label: field.label || '', 
             placeholder: field.enum[0] || '', 
             defaultValue: defaultValue || field.enum[0], 
-            children:  _.map(field.enum, function(val) {
+            children:  _.map(field.enum, function(val, key) {
                 return (
-                  React.createElement("option", {value: val}, val)
+                  React.createElement("option", {value: (enumArray ? val : key)}, val)
                 );
               }), 
             
