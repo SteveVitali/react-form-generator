@@ -109,6 +109,8 @@ var FormGenerator = {
 
     if (field.type === String || field.type === Number) {
       if (field.enum) {
+        var enumArray = _.isArray(field.enum);
+
         return (
           <FlatField
             type='select'
@@ -116,9 +118,9 @@ var FormGenerator = {
             label={field.label || ''}
             placeholder={field.enum[0] || ''}
             defaultValue={defaultValue || field.enum[0]}
-            children={ _.map(field.enum, function(val) {
+            children={ _.map(field.enum, function(val, key) {
                 return (
-                  <option value={val}>{val}</option>
+                  <option value={(enumArray ? val : key)}>{val}</option>
                 );
               })
             }
