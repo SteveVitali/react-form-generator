@@ -14,16 +14,8 @@ Generate, validate, and parse React forms based on arbitrary JSON schemas.
 
 Or download from this repo and use globally (FormGenerator) or with RequireJS
 
-### Demos
-To run the demo app that uses bower, navigate to the `/demos/bower` directory and run:
-```
-npm install
-bower install
-npm start
-open http://localhost:3000
-```
-
-To run the demo app that uses browserify, navigate to `/demos/browserify` and run:
+### Demo
+To run the demo app, navigate to `/demos/browserify` and run:
 ```
 npm install
 npm start
