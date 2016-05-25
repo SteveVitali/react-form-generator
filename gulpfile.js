@@ -1,29 +1,41 @@
 var gulp = require('gulp');
+var sourcemaps = require('gulp-sourcemaps');
+var source = require('vinyl-source-stream');
+var buffer = require('vinyl-buffer');
+var browserify = require('browserify');
+var watchify = require('watchify');
+var babel = require('babelify');
+var resolutions = require('browserify-resolutions');
 var uglify = require('gulp-uglify');
-var react = require('gulp-react');
-var replace = require('gulp-replace');
-var concat = require('gulp-concat');
 
-// Build the version located at /dist/react-form-generator.min.js
-// that can be used globally or through bower
-gulp.task('build-global', function() {
-  gulp.src('src/*.jsx')
-    .pipe(react())
-    .pipe(concat('form-generator.js'))
-    .pipe(gulp.dest('dist'))
-    .pipe(replace(
-      'module.exports = FormGenerator',
-      'window.FormGenerator = FormGenerator'
-    ))
-    .pipe(replace("var React = require('react');", ''))
-    .pipe(replace("var ReactBootstrap = require('react-bootstrap');", ''))
-    .pipe(uglify())
-    .pipe(concat('form-generator.min.js'))
-    .pipe(gulp.dest('dist'));
-});
+function compile(watch) {
+  var bundler = watchify(
+    browserify('./src/form-generator.jsx', { debug: true })
+      .plugin(resolutions, ['react'])
+      .transform(babel)
+  );
 
-gulp.task('watch', function() {
-  gulp.watch('src/*.jsx', ['build-global']);
-});
+  function rebundle() {
+    var start = Date.now();
+    bundler.bundle()
+      .on('error', function(err) {
+        console.error(err); this.emit('end');
+      })
+      .pipe(source('form-generator.js'))
+      .pipe(buffer())
+      .pipe(sourcemaps.init({ loadMaps: true }))
+      .pipe(uglify())
+      .pipe(sourcemaps.write('./'))
+      .pipe(gulp.dest('./dist'));
+    console.log('Updated in', (Date.now() - start) + 'ms');
+  }
+
+  watch && bundler.on('update', rebundle);
+
+  rebundle();
+}
+
+gulp.task('build', function() { return compile(); });
+gulp.task('watch', function() { return compile(true); });
 
 gulp.task('default', ['watch']);
