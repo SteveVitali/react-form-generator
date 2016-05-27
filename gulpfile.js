@@ -10,7 +10,7 @@ var uglify = require('gulp-uglify');
 
 function compile(watch) {
   var bundler = watchify(
-    browserify('./src/form-generator.jsx', { debug: true })
+    browserify('./src/FormGenerator.jsx', { debug: true })
       .plugin(resolutions, ['react'])
       .transform(babel)
   );
@@ -21,7 +21,7 @@ function compile(watch) {
       .on('error', function(err) {
         console.error(err); this.emit('end');
       })
-      .pipe(source('form-generator.js'))
+      .pipe(source('FormGenerator.js'))
       .pipe(buffer())
       .pipe(sourcemaps.init({ loadMaps: true }))
       .pipe(uglify())
