@@ -1,8 +1,8 @@
-var _ = require('underscore');
-var React = require('react');
-var ReactBootstrap = require('react-bootstrap');
+import _ from 'underscore'
+import React from 'react'
+import { Button, Panel, FormControl, FormGroup, ControlLabel} from 'react-bootstrap'
 
-var FormGenerator = {
+const FormGenerator = {
   /**
    * This creates a new FormGenerator form based on the schema
    * and gives it a particular ref for access later
@@ -44,12 +44,12 @@ var FormGenerator = {
           onChange={onChange}/>
       ];
     }
-    var fields = [];
-    for (var key in schema) {
-      var field = schema[key];
+    let fields = [];
+    for (let key in schema) {
+      let field = schema[key];
       // Lower level default values take precedence
       defaultValue = defaultValue || {};
-      var defaultVal = field.defaultValue || defaultValue[key] || '';
+      let defaultVal = field.defaultValue || defaultValue[key] || '';
 
       if (typeof field.type === 'object') {
         // Validate that it's an array
@@ -106,7 +106,7 @@ var FormGenerator = {
    */
   generateFlatField: function(name, field, defaultValue, onChange, validateOnSubmit, i) {
     i = _.isNumber(i) ? i : 0;
-    var validators =
+    let validators =
       field.validators || (field.validate && [field.validate]) || [];
 
     if (field.hidden) {
@@ -250,7 +250,7 @@ var FormGenerator = {
   }
 };
 
-var FormGeneratorForm = React.createClass({
+const FormGeneratorForm = React.createClass({
   propTypes: {
     schema: React.PropTypes.object.isRequired,
     onSubmit: React.PropTypes.func,
@@ -274,10 +274,9 @@ var FormGeneratorForm = React.createClass({
   },
 
   onChange: function() {
-    var that = this;
-    setTimeout(function() {
-      that.setState({
-        isValid: that.isValid()
+    setTimeout(() => {
+      this.setState({
+        isValid: this.isValid()
       });
     }, 100);
   },
@@ -288,7 +287,7 @@ var FormGeneratorForm = React.createClass({
         validateOnSubmit: false
       }, this.showErrorMessages);
     }
-    var onSubmit = this.props.onSubmit;
+    const onSubmit = this.props.onSubmit;
     onSubmit && onSubmit(this.getValue());
   },
 
@@ -313,7 +312,7 @@ var FormGeneratorForm = React.createClass({
   },
 
   render: function() {
-    var buttonDisabled = this.state.validateOnSubmit
+    const buttonDisabled = this.state.validateOnSubmit
       ? false
       : !this.state.isValid;
 
@@ -325,18 +324,18 @@ var FormGeneratorForm = React.createClass({
           label={this.props.label}
           onChange={this.onChange}
           validateOnSubmit={this.state.validateOnSubmit}/>
-        <ReactBootstrap.Button
+        <Button
           bSize='large'
           onClick={this.onSubmit}
           disabled={buttonDisabled}>
           Submit
-        </ReactBootstrap.Button>
+        </Button>
       </form>
     );
   }
 });
 
-var ObjectField = React.createClass({
+const ObjectField = React.createClass({
   propTypes: {
     schema: React.PropTypes.object.isRequired,
     onChange: React.PropTypes.func.isRequired,
@@ -358,21 +357,19 @@ var ObjectField = React.createClass({
   },
 
   getValue: function() {
-    var that = this;
-    return _.mapObject(this.props.schema, function(val, key) {
-      return that.refs[key].getValue();
+    return _.mapObject(this.props.schema, (val, key) => {
+      return this.refs[key].getValue();
     });
   },
 
   setValue: function(newValue) {
-    var refs = this.refs;
-    for (var key in this.props.schema) {
-      refs[key].setValue(newValue[key]);
+    for (let key in this.props.schema) {
+      this.refs[key].setValue(newValue[key]);
     }
   },
 
   reset: function() {
-    for (var field in this.props.schema) {
+    for (let field in this.props.schema) {
       this.refs[field].reset();
     }
   },
@@ -382,37 +379,37 @@ var ObjectField = React.createClass({
   },
 
   isValid: function() {
-    var valid = true;
-    for (var field in this.props.schema) {
+    let valid = true;
+    for (let field in this.props.schema) {
       valid = valid && this.refs[field].isValid();
     }
     return valid;
   },
 
   showErrorMessages: function() {
-    for (var field in this.props.schema) {
+    for (let field in this.props.schema) {
       this.refs[field].showErrorMessages();
     }
   },
 
   render: function() {
-    var subFields = FormGenerator.generate(
+    const subFields = FormGenerator.generate(
       this.props.schema,
       this.props.defaultValue,
       this.props.onChange,
       this.props.validateOnSubmit
     );
     return (
-      <ReactBootstrap.Panel
+      <Panel
         header={this.props.label}
         key={this.props.id}>
         {subFields}
-      </ReactBootstrap.Panel>
+      </Panel>
     );
   }
 });
 
-var ArrayField = React.createClass({
+const ArrayField = React.createClass({
   propTypes: {
     schema: React.PropTypes.oneOfType([
       React.PropTypes.func,
@@ -437,36 +434,34 @@ var ArrayField = React.createClass({
   },
 
   getInitialState: function() {
-    var negativeOrZero = function(num) {
+    const negativeOrZero = function(num) {
       return num < 0 ? 0 : num;
     };
-    var defaultLength = negativeOrZero(this.props.defaultValue.length);
-    var initialLength = negativeOrZero(this.props.initialLength);
-    var actualLength = defaultLength || initialLength || 1;
+    const defaultLength = negativeOrZero(this.props.defaultValue.length);
+    const initialLength = negativeOrZero(this.props.initialLength);
+    const actualLength = defaultLength || initialLength || 1;
     return {
       size: actualLength
     };
   },
 
   getValue: function() {
-    var that = this;
-    var refPrefix = this.props.refPrefix;
-    var values = [];
-    _.times(this.state.size, function(i) {
-      values.push(that.refs[refPrefix + i].getValue());
+    const refPrefix = this.props.refPrefix;
+    let values = [];
+    _.times(this.state.size, (i) => {
+      values.push(this.refs[refPrefix + i].getValue());
     });
     return values;
   },
 
   setValue: function(values) {
-    var refs = this.refs;
     this.setState({
       size: values.length || 1
     },
-    function() {
-      var refPrefix = this.props.refPrefix;
-      _.each(values, function(value, i) {
-        refs[refPrefix + i].setValue(value);
+    () => {
+      const refPrefix = this.props.refPrefix;
+      _.each(values, (value, i) => {
+        this.refs[refPrefix + i].setValue(value);
       });
     });
   },
@@ -476,20 +471,18 @@ var ArrayField = React.createClass({
   },
 
   isValid: function() {
-    var that = this;
-    var refPrefix = this.props.refPrefix;
-    var valid = true;
-    _.times(this.state.size, function(i) {
-      valid = valid && that.refs[refPrefix + i].isValid();
+    const refPrefix = this.props.refPrefix;
+    let valid = true;
+    _.times(this.state.size, (i) => {
+      valid = valid && this.refs[refPrefix + i].isValid();
     });
     return valid;
   },
 
   showErrorMessages: function() {
-    var that = this;
-    var refPrefix = this.props.refPrefix;
-    _.times(this.state.size, function(i) {
-      that.refs[refPrefix + i].showErrorMessages();
+    const refPrefix = this.props.refPrefix;
+    _.times(this.state.size, (i) => {
+      this.refs[refPrefix + i].showErrorMessages();
     });
   },
 
@@ -500,7 +493,7 @@ var ArrayField = React.createClass({
   },
 
   removeField: function() {
-    var decremented = this.state.size - 1;
+    const decremented = this.state.size - 1;
     // Don't let the number of values become < 1
     this.setState({
       size: decremented || 1
@@ -508,22 +501,21 @@ var ArrayField = React.createClass({
   },
 
   render: function() {
-    var that = this;
-    var schema = this.props.schema;
-    var refPrefix = this.props.refPrefix;
-    var defaultValue = this.props.defaultValue;
-    var onChange = this.props.onChange;
-    var validateOnSubmit = this.props.validateOnSubmit;
+    const schema = this.props.schema;
+    const refPrefix = this.props.refPrefix;
+    const defaultValue = this.props.defaultValue;
+    const onChange = this.props.onChange;
+    const validateOnSubmit = this.props.validateOnSubmit;
 
-    var arrayFields = [];
-    _.times(this.state.size, function(i) {
-      var defaultVal = (defaultValue && defaultValue[i]) || '';
-      var fieldRef = refPrefix + i;
+    let arrayFields = [];
+    _.times(this.state.size, (i) => {
+      const defaultVal = (defaultValue && defaultValue[i]) || '';
+      const fieldRef = refPrefix + i;
       // Flat/native type
       if (typeof schema === 'function') {
-        var mockSchema = {
+        const mockSchema = {
           type: schema,
-          label: that.props.label,
+          label: this.props.label,
           defaultValue: defaultVal
         };
         arrayFields.push(
@@ -533,7 +525,7 @@ var ArrayField = React.createClass({
         );
       } else {
         // It's an object or an object array, so use 'generate'
-        var schemaWrapper = {};
+        let schemaWrapper = {};
         schemaWrapper[fieldRef] = {
           type: schema,
           defaultValue: defaultVal
@@ -547,33 +539,33 @@ var ArrayField = React.createClass({
     });
     return (
       <div key={this.props.id}>
-        <ReactBootstrap.Panel header={that.props.label}>
+        <Panel header={this.props.label}>
           {arrayFields}
-          <ReactBootstrap.Button
+          <Button
             bsStyle='primary'
             bsSize='xsmall'
-            onClick={that.addField}>
+            onClick={this.addField}>
             Add
-          </ReactBootstrap.Button>
-          <ReactBootstrap.Button
+          </Button>
+          <Button
             bsStyle='primary'
             bsSize='xsmall'
-            onClick={that.removeField}>
+            onClick={this.removeField}>
             Remove
-          </ReactBootstrap.Button>
-        </ReactBootstrap.Panel>
+          </Button>
+        </Panel>
       </div>
     );
   }
 });
 
-var flatTypes = [
+const flatTypes = [
   React.PropTypes.string,
   React.PropTypes.number,
   React.PropTypes.boolean
 ];
 
-var FlatField = React.createClass({
+const FlatField = React.createClass({
   propTypes: {
     // text or select
     type: React.PropTypes.string,
@@ -613,7 +605,7 @@ var FlatField = React.createClass({
   },
 
   componentDidMount: function() {
-    var errorMessages = this.props.validateOnSubmit
+    const errorMessages = this.props.validateOnSubmit
       ? []
       : this.validate(this.getValue());
 
@@ -624,7 +616,7 @@ var FlatField = React.createClass({
   },
 
   validate: function(value) {
-    var validators = this.props.validators;
+    let validators = this.props.validators;
     // If required, add the nonEmpty validator
     validators = this.props.isRequired
       ? validators.concat([FormGenerator.validators.nonEmpty()])
@@ -657,7 +649,7 @@ var FlatField = React.createClass({
   },
 
   setValue: function(newValue) {
-    var errorMessages = this.props.validateOnSubmit
+    const errorMessages = this.props.validateOnSubmit
       ? []
       : this.validate(this.getValue());
 
@@ -674,7 +666,7 @@ var FlatField = React.createClass({
   onChange: function(e) {
     // If checkbox type, toggle value;
     // otherwise, use the event target value
-    var newValue = this.props.type === 'checkbox'
+    const newValue = this.props.type === 'checkbox'
       ? !this.state.value
       : e.target.value;
 
@@ -682,7 +674,7 @@ var FlatField = React.createClass({
   },
 
   render: function() {
-    var errorClass = this.state.errorMessages.length
+    const errorClass = this.state.errorMessages.length
       ? ' has-error'
       : '';
 
@@ -710,7 +702,7 @@ var FlatField = React.createClass({
           </div>
         );
         case 'checkbox': return (
-          <ReactBootstrap.FormControl
+          <FormControl
             type={that.props.type}
             key={that.props.id}
             label={that.props.label}
@@ -720,18 +712,18 @@ var FlatField = React.createClass({
         );
         case 'select':
         return (
-          <ReactBootstrap.FormGroup key={that.props.id}>
-            <ReactBootstrap.ControlLabel>
+          <FormGroup key={that.props.id}>
+            <ControlLabel>
               {that.props.label}
-            </ReactBootstrap.ControlLabel>
-            <ReactBootstrap.FormControl
+            </ControlLabel>
+            <FormControl
               componentClass='select'
               placeholder={that.props.placeholder}
               onChange={that.onChange}
               value={that.state.value}>
               {that.props.children}
-            </ReactBootstrap.FormControl>
-          </ReactBootstrap.FormGroup>
+            </FormControl>
+          </FormGroup>
         );
         case 'hidden': return <span key={that.props.id}/>;
         case 'date': throw 'Unimplemented';
