@@ -27,7 +27,7 @@
     "express": "^4.13.4"
   },
   "peerDependencies": {
-    "react": "0.14.8",
-    "react-dom": "0.14.8"
+    "react": "^15.0.1",
+    "react-dom": "^15.0.1"
   }
 }

@@ -36,12 +36,12 @@
     "watchify": "^3.7.0"
   },
   "dependencies": {
-    "react-bootstrap": ">=0.27.0",
+    "react-bootstrap": "^0.29.4",
     "reactify": "^1.1.1",
     "underscore": "^1.8.3"
   },
   "peerDependencies": {
-    "react": "<0.15",
-    "react-dom": "<0.15"
+    "react": "^15.0.1",
+    "react-dom": "^15.0.1"
   }
 }
