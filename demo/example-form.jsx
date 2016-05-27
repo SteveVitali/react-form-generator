@@ -1,5 +1,5 @@
 import React from 'react'
-// import ReactDOM from 'react-dom'
+import ReactDOM from 'react-dom'
 import FormGenerator from '../src/form-generator.jsx'
 
 var Example = React.createClass({
@@ -148,5 +148,5 @@ var Example = React.createClass({
 (() => {
   const rootParent = document.getElementById('example-root');
   const rootNode = React.createElement(Example, {}, rootParent);
-  React.render(rootNode, rootParent);
+  ReactDOM.render(rootNode, rootParent);
 })();

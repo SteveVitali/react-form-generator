@@ -24,7 +24,10 @@
   },
   "dependencies": {
     "bootstrap": "^3.3.6",
-    "express": "^4.13.4",
-    "react": "0.13.3"
+    "express": "^4.13.4"
+  },
+  "peerDependencies": {
+    "react": "0.14.8",
+    "react-dom": "0.14.8"
   }
 }
