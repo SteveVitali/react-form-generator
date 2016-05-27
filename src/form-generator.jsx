@@ -28,14 +28,18 @@ var FormGenerator = {
    * @param  {Any}      defaultValue The default value for this field
    * @param  {Function} onChange   Function to run any time a field changes
    * @param  {Boolean} validateOnSubmit Wait until submit to validate
+   * @param  {Number}  i Optional array "key" prop
    * @return {Array} An array of JSX Input fields representing the schema
    */
-  generate: function(schema, defaultValue, onChange, validateOnSubmit) {
+  generate: function(schema, defaultValue, onChange, validateOnSubmit, i) {
+    i = _.isNumber(i) ? i : 0;
     // Special case for array schemas
     if (_.isArray(schema)) {
       return [
         <ArrayField
           ref={key}
+          key={0}
+          id={0}
           schema={schema[0]}
           onChange={onChange}/>
       ];
@@ -55,6 +59,8 @@ var FormGenerator = {
           fields.push(
             <ArrayField
               ref={key}
+              key={i}
+              id={i}
               label={field.label}
               schema={field.type[0]}
               onChange={onChange}
@@ -66,10 +72,12 @@ var FormGenerator = {
           fields.push(
             <ObjectField
               ref={key}
+              key={i}
+              id={i}
               label={field.label}
               schema={field.type}
               onChange={onChange}
-              defaultValue={defaultVal}
+              defaultValue={defaultVal || {}}
               validateOnSubmit={validateOnSubmit}/>
           );
         }
@@ -77,10 +85,11 @@ var FormGenerator = {
         // Flat field
         fields.push(
           this.generateFlatField(
-            key, field, defaultVal, onChange, validateOnSubmit
+            key, field, defaultVal, onChange, validateOnSubmit, i
           )
         );
       }
+      i++;
     }
     return fields;
   },
@@ -92,9 +101,11 @@ var FormGenerator = {
    * @param  {String}   defaultValue The default value for this field
    * @param  {Function} onChange Function to run any time a field changes
    * @param  {Boolean} validateOnSubmit Wait until submit to validate
+   * @param  {Number}  i Optional array "key" prop
    * @return {JSX}      A JSX representation of the field
    */
-  generateFlatField: function(name, field, defaultValue, onChange, validateOnSubmit) {
+  generateFlatField: function(name, field, defaultValue, onChange, validateOnSubmit, i) {
+    i = _.isNumber(i) ? i : 0;
     var validators =
       field.validators || (field.validate && [field.validate]) || [];
 
@@ -103,6 +114,8 @@ var FormGenerator = {
         <FlatField
           type='hidden'
           ref={name}
+          key={i}
+          id={i}
           defaultValue={defaultValue}/>
       );
     }
@@ -113,12 +126,16 @@ var FormGenerator = {
           <FlatField
             type='select'
             ref={name}
+            key={i}
+            id={i}
             label={field.label || ''}
             placeholder={field.enum[0] || ''}
             defaultValue={defaultValue || field.enum[0]}
-            children={ _.map(field.enum, function(val) {
+            children={ _.map(field.enum, function(val, i) {
                 return (
-                  <option value={val}>{val}</option>
+                  <option value={val} key={i}>
+                    {val}
+                  </option>
                 );
               })
             }
@@ -133,6 +150,8 @@ var FormGenerator = {
           <FlatField
             type={field.isPassword ? 'password' : 'text'}
             ref={name}
+            key={i}
+            id={i}
             label={field.label}
             placeholder={field.label || ''}
             defaultValue={defaultValue}
@@ -150,6 +169,8 @@ var FormGenerator = {
           type='checkbox'
           label={field.label}
           ref={name}
+          key={i}
+          id={i}
           defaultValue={defaultValue}
           validators={validators}
           onChange={onChange}
@@ -163,6 +184,8 @@ var FormGenerator = {
           type='date'
           label={field.label}
           ref={name}
+          key={i}
+          id={i}
           defaultValue={defaultValue}
           validators={validators}
           onChange={onChange}
@@ -319,12 +342,14 @@ var ObjectField = React.createClass({
     onChange: React.PropTypes.func.isRequired,
     label: React.PropTypes.string,
     defaultValue: React.PropTypes.object,
-    validateOnSubmit: React.PropTypes.bool
+    validateOnSubmit: React.PropTypes.bool,
+    id: React.PropTypes.number
   },
 
   getDefaultProps: function() {
     return {
-      label: ''
+      label: '',
+      id: 0
     };
   },
 
@@ -378,7 +403,9 @@ var ObjectField = React.createClass({
       this.props.validateOnSubmit
     );
     return (
-      <ReactBootstrap.Panel header={this.props.label}>
+      <ReactBootstrap.Panel
+        header={this.props.label}
+        key={this.props.id}>
         {subFields}
       </ReactBootstrap.Panel>
     );
@@ -389,12 +416,14 @@ var ArrayField = React.createClass({
   propTypes: {
     schema: React.PropTypes.oneOfType([
       React.PropTypes.func,
-      React.PropTypes.object
+      React.PropTypes.object,
+      React.PropTypes.array
     ]).isRequired,
     onChange: React.PropTypes.func.isRequired,
     label: React.PropTypes.string,
     initialLength: React.PropTypes.number,
-    validateOnSubmit: React.PropTypes.bool
+    validateOnSubmit: React.PropTypes.bool,
+    id: React.PropTypes.number
   },
 
   getDefaultProps: function() {
@@ -402,7 +431,8 @@ var ArrayField = React.createClass({
       defaultValue: [],
       label: '',
       initialLength: 1,
-      refPrefix: 'array_ref'
+      refPrefix: 'array_ref',
+      id: 0
     };
   },
 
@@ -498,7 +528,7 @@ var ArrayField = React.createClass({
         };
         arrayFields.push(
           FormGenerator.generateFlatField(
-            fieldRef, mockSchema, defaultVal, onChange, validateOnSubmit
+            fieldRef, mockSchema, defaultVal, onChange, validateOnSubmit, i
           )
         );
       } else {
@@ -510,13 +540,13 @@ var ArrayField = React.createClass({
         };
         arrayFields.push(
           FormGenerator.generate(
-            schemaWrapper, defaultVal, onChange, validateOnSubmit
+            schemaWrapper, defaultVal, onChange, validateOnSubmit, i
           )
         );
       }
     });
     return (
-      <div>
+      <div key={this.props.id}>
         <ReactBootstrap.Panel header={that.props.label}>
           {arrayFields}
           <ReactBootstrap.Button
@@ -537,20 +567,27 @@ var ArrayField = React.createClass({
   }
 });
 
+var flatTypes = [
+  React.PropTypes.string,
+  React.PropTypes.number,
+  React.PropTypes.boolean
+];
+
 var FlatField = React.createClass({
   propTypes: {
     // text or select
     type: React.PropTypes.string,
-    label: React.PropTypes.string,
-    placeholder: React.PropTypes.string,
+    label: React.PropTypes.oneOfType(flatTypes),
+    placeholder: React.PropTypes.oneOfType(flatTypes),
     children: React.PropTypes.array,
-    defaultValue: React.PropTypes.string,
+    defaultValue: React.PropTypes.any,
     validators: React.PropTypes.arrayOf(React.PropTypes.func),
     onChange: React.PropTypes.func,
     isRequired: React.PropTypes.bool,
     isNumerical: React.PropTypes.bool,
     isPassword: React.PropTypes.bool,
-    validateOnSubmit: React.PropTypes.bool
+    validateOnSubmit: React.PropTypes.bool,
+    id: React.PropTypes.number
   },
 
   getDefaultProps: function() {
@@ -563,7 +600,8 @@ var FlatField = React.createClass({
       onChange: function() {},
       defaultValue: '',
       isRequired: false,
-      isNumerical: false
+      isNumerical: false,
+      id: 0
     };
   },
 
@@ -652,7 +690,7 @@ var FlatField = React.createClass({
       switch (that.props.type) {
         case 'text':
         case 'password': return (
-          <div className={'form-group' + errorClass}>
+          <div className={'form-group' + errorClass} key={that.props.id}>
             <label className='control-label'>
               {that.props.label}
             </label>
@@ -662,9 +700,9 @@ var FlatField = React.createClass({
               placeholder={that.props.placeholder}
               onChange={that.onChange}
               value={that.state.value}/>
-            { _.map(that.state.errorMessages, function(msg) {
+            { _.map(that.state.errorMessages, function(msg, i) {
                 return (
-                  <span className='help-block'>
+                  <span className='help-block' key={i}>
                     {msg}
                   </span>
                 );
@@ -672,25 +710,32 @@ var FlatField = React.createClass({
           </div>
         );
         case 'checkbox': return (
-          <ReactBootstrap.Input
+          <ReactBootstrap.FormControl
             type={that.props.type}
+            key={that.props.id}
             label={that.props.label}
             placeholder={that.props.placeholder}
             onChange={that.onChange}
             checked={that.getValue()}/>
         );
-        case 'select': return (
-          <ReactBootstrap.Input
-            type={that.props.type}
-            label={that.props.label}
-            placeholder={that.props.placeholder}
-            onChange={that.onChange}
-            value={that.state.value}>
-            {that.props.children}
-          </ReactBootstrap.Input>
+        case 'select':
+        return (
+          <ReactBootstrap.FormGroup key={that.props.id}>
+            <ReactBootstrap.ControlLabel>
+              {that.props.label}
+            </ReactBootstrap.ControlLabel>
+            <ReactBootstrap.FormControl
+              componentClass='select'
+              placeholder={that.props.placeholder}
+              onChange={that.onChange}
+              value={that.state.value}>
+              {that.props.children}
+            </ReactBootstrap.FormControl>
+          </ReactBootstrap.FormGroup>
         );
+        case 'hidden': return <span key={that.props.id}/>;
         case 'date': throw 'Unimplemented';
-        case 'hidden': return null;
+        default: throw 'Unimplemented';
       }
     })(this);
   }
