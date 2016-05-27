@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
-import FormGenerator from '../src/form-generator.jsx'
+import FormGenerator from '../src/FormGenerator.jsx'
 
 var Example = React.createClass({
   schema: {
