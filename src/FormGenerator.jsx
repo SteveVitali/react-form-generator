@@ -6,7 +6,7 @@ import ArrayField from './ArrayField.jsx'
 import FlatField from './FlatField.jsx'
 import validators from './validators.js'
 import {
-  DefaultTextInput, DefaultBoolInput, DefaultEnumInput
+  DefaultTextInput, DefaultBoolInput, DefaultEnumInput, DefaultArrayInput
 } from './input-components'
 
 /**
@@ -25,7 +25,8 @@ function FormGenerator(inputs = {}) {
     inputs: {
       TextInput: inputs.TextInput || DefaultTextInput,
       BoolInput: inputs.BoolInput || DefaultBoolInput,
-      EnumInput: inputs.EnumInput || DefaultEnumInput
+      EnumInput: inputs.EnumInput || DefaultEnumInput,
+      ArrayInput: inputs.ArrayInput || DefaultArrayInput
     },
     /**
      * This creates a new FormGenerator form based on the schema

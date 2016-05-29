@@ -1,6 +1,7 @@
 import _ from 'underscore'
 import React from 'react'
 import { Button, Panel } from 'react-bootstrap'
+import DefaultArrayInput from './input-components/DefaultArrayInput.jsx'
 
 const ArrayField = React.createClass({
   propTypes: {
@@ -35,27 +36,30 @@ const ArrayField = React.createClass({
     const initialLength = negativeOrZero(this.props.initialLength);
     const actualLength = defaultLength || initialLength || 1;
     return {
-      size: actualLength
+      size: actualLength,
+      errors: []
     };
   },
 
   getValue: function() {
     const refPrefix = this.props.refPrefix;
+    const refs = this.refs.arrayElement.refs;
     let values = [];
     _.times(this.state.size, (i) => {
-      values.push(this.refs[refPrefix + i].getValue());
+      values.push(refs[refPrefix + i].getValue());
     });
     return values;
   },
 
   setValue: function(values) {
+    const refs = this.refs.arrayElement.refs;
     this.setState({
       size: values.length || 1
     },
     () => {
       const refPrefix = this.props.refPrefix;
       _.each(values, (value, i) => {
-        this.refs[refPrefix + i].setValue(value);
+        refs[refPrefix + i].setValue(value);
       });
     });
   },
@@ -65,18 +69,20 @@ const ArrayField = React.createClass({
   },
 
   isValid: function() {
+    const refs = this.refs.arrayElement.refs;
     const refPrefix = this.props.refPrefix;
     let valid = true;
     _.times(this.state.size, (i) => {
-      valid = valid && this.refs[refPrefix + i].isValid();
+      valid = valid && refs[refPrefix + i].isValid();
     });
     return valid;
   },
 
   showErrorMessages: function() {
     const refPrefix = this.props.refPrefix;
+    const refs = this.refs.arrayElement.refs;
     _.times(this.state.size, (i) => {
-      this.refs[refPrefix + i].showErrorMessages();
+      refs[refPrefix + i].showErrorMessages();
     });
   },
 
@@ -94,61 +100,55 @@ const ArrayField = React.createClass({
     });
   },
 
-  render: function() {
-    const schema = this.props.schema;
+  onChange: function(e) {
+    this.props.onChange(e);
+  },
+
+  buildElement: function(i) {
     const refPrefix = this.props.refPrefix;
     const defaultValue = this.props.defaultValue;
-    const onChange = this.props.onChange;
+    const onChange = this.onChange;
     const validateOnSubmit = this.props.validateOnSubmit;
+    const schema = this.props.schema;
+    const defaultVal = (defaultValue && defaultValue[i]) || '';
+    const fieldRef = refPrefix + i;
 
-    let arrayFields = [];
-    _.times(this.state.size, (i) => {
-      const defaultVal = (defaultValue && defaultValue[i]) || '';
-      const fieldRef = refPrefix + i;
-      // Flat/native type
-      if (typeof schema === 'function') {
-        const mockSchema = {
-          type: schema,
-          label: this.props.label,
-          defaultValue: defaultVal
-        };
-        arrayFields.push(
-          this.props.formGenerator.generateFlatField(
-            fieldRef, mockSchema, defaultVal, onChange, validateOnSubmit, i
-          )
-        );
-      } else {
-        // It's an object or an object array, so use 'generate'
-        let schemaWrapper = {};
-        schemaWrapper[fieldRef] = {
-          type: schema,
-          defaultValue: defaultVal
-        };
-        arrayFields.push(
-          this.props.formGenerator.generate(
-            schemaWrapper, defaultVal, onChange, validateOnSubmit, i
-          )
-        );
-      }
-    });
+    // Flat/native type
+    if (typeof schema === 'function') {
+      const mockSchema = {
+        type: schema,
+        label: this.props.label,
+        defaultValue: defaultVal
+      };
+      return this.props.formGenerator.generateFlatField(
+        refPrefix + i, mockSchema, defaultVal, onChange, validateOnSubmit, i
+      );
+    } else {
+      // It's an object or an object array, so use 'generate'
+      let schemaWrapper = {};
+      schemaWrapper[fieldRef] = {
+        type: schema,
+        defaultValue: defaultVal
+      };
+      return this.props.formGenerator.generate(
+        schemaWrapper, defaultVal, onChange, validateOnSubmit, i
+      );
+    }
+  },
+
+  render: function() {
+    const ArrayInput = this.props.formGenerator.inputs.ArrayInput;
     return (
-      <div key={this.props.id}>
-        <Panel header={this.props.label}>
-          {arrayFields}
-          <Button
-            bsStyle='primary'
-            bsSize='xsmall'
-            onClick={this.addField}>
-            Add
-          </Button>
-          <Button
-            bsStyle='primary'
-            bsSize='xsmall'
-            onClick={this.removeField}>
-            Remove
-          </Button>
-        </Panel>
-      </div>
+      <ArrayInput
+        ref={'arrayElement'}
+        buildElement={this.buildElement}
+        addField={this.addField}
+        removeField={this.removeField}
+        size={this.state.size}
+        errors={this.state.errors}
+        label={this.props.label}
+        key={this.props.id}
+        id={this.props.id}/>
     );
   }
 });
