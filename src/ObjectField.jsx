@@ -21,7 +21,9 @@ const ObjectField = React.createClass({
   },
 
   getInitialState: function() {
-    return {};
+    return {
+      errors: []
+    };
   },
 
   getValue: function() {
@@ -61,6 +63,7 @@ const ObjectField = React.createClass({
   },
 
   render: function() {
+    const ObjectInput = this.props.formGenerator.inputs.ObjectInput;
     const subFields = this.props.formGenerator.generate(
       this.props.schema,
       this.props.defaultValue,
@@ -68,11 +71,12 @@ const ObjectField = React.createClass({
       this.props.validateOnSubmit
     );
     return (
-      <Panel
-        header={this.props.label}
-        key={this.props.id}>
-        {subFields}
-      </Panel>
+      <ObjectInput
+        label={this.props.label}
+        errors={this.state.errors}
+        children={subFields}
+        key={this.props.id}
+        id={this.props.id}/>
     );
   }
 });
