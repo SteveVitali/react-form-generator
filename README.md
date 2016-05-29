@@ -10,8 +10,6 @@ Generate, validate, and parse React forms based on arbitrary JSON schemas.
 
 `npm install --save form-generator-react`
 
-`bower install --save react-form-generator`
-
 Or download from this repo and use globally (FormGenerator) or with RequireJS
 
 ### Demo
