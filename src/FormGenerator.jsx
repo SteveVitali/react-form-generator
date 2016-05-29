@@ -143,6 +143,7 @@ function FormGenerator(inputs = {}) {
       if (field.hidden) {
         return (
           <FlatField
+            formGenerator={this}
             type='hidden'
             ref={name}
             key={i}
@@ -155,6 +156,7 @@ function FormGenerator(inputs = {}) {
         if (field.enum) {
           return (
             <FlatField
+              formGenerator={this}
               type='select'
               ref={name}
               key={i}
@@ -179,6 +181,7 @@ function FormGenerator(inputs = {}) {
         else {
           return (
             <FlatField
+              formGenerator={this}
               type={field.isPassword ? 'password' : 'text'}
               ref={name}
               key={i}
@@ -197,6 +200,7 @@ function FormGenerator(inputs = {}) {
       else if (field.type === Boolean) {
         return (
           <FlatField
+            formGenerator={this}
             type='checkbox'
             label={field.label}
             ref={name}
@@ -212,6 +216,7 @@ function FormGenerator(inputs = {}) {
       else if (field.type === Date) {
         return (
           <FlatField
+            formGenerator={this}
             type='date'
             label={field.label}
             ref={name}

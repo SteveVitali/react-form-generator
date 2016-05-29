@@ -14,6 +14,7 @@ const FlatField = React.createClass({
   propTypes: {
     // text or select
     type: React.PropTypes.string,
+    formGenerator: React.PropTypes.object.isRequired,
     label: React.PropTypes.oneOfType(flatTypes),
     placeholder: React.PropTypes.oneOfType(flatTypes),
     children: React.PropTypes.array,
@@ -119,6 +120,8 @@ const FlatField = React.createClass({
   },
 
   render: function() {
+    const TextInput = this.props.formGenerator.inputs.TextInput;
+
     const errorClass = this.state.errorMessages.length
       ? ' has-error'
       : '';
@@ -127,7 +130,7 @@ const FlatField = React.createClass({
       switch (that.props.type) {
         case 'text':
         case 'password': return (
-          <DefaultTextInput
+          <TextInput
             type={that.props.type}
             errors={that.state.errorMessages}
             label={that.props.label}

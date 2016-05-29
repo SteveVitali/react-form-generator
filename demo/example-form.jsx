@@ -1,11 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import FormGenerator from '../src/FormGenerator.jsx'
-import VanillaTextInput from '../src/input-components/VanillaTextInput.jsx'
+import DefaultTextInput from '../src/input-components/DefaultTextInput.jsx'
 
 // Create instance of FormGenerator with particular inputs
 const formGenerator = new FormGenerator({
-  TextInput: VanillaTextInput
+  TextInput: DefaultTextInput
 });
 
 const Example = React.createClass({
