@@ -5,7 +5,9 @@ import ObjectField from './ObjectField.jsx'
 import ArrayField from './ArrayField.jsx'
 import FlatField from './FlatField.jsx'
 import validators from './validators.js'
-import DefaultTextInput from './input-components/DefaultTextInput.jsx'
+import {
+  DefaultTextInput, DefaultBoolInput, DefaultEnumInput
+} from './input-components'
 
 /**
  * Construct a FormGenerator instance that generates forms
@@ -21,7 +23,9 @@ import DefaultTextInput from './input-components/DefaultTextInput.jsx'
 function FormGenerator(inputs = {}) {
   return {
     inputs: {
-      TextInput: inputs.TextInput || DefaultTextInput
+      TextInput: inputs.TextInput || DefaultTextInput,
+      BoolInput: inputs.BoolInput || DefaultBoolInput,
+      EnumInput: inputs.EnumInput || DefaultEnumInput
     },
     /**
      * This creates a new FormGenerator form based on the schema
@@ -164,14 +168,7 @@ function FormGenerator(inputs = {}) {
               label={field.label || ''}
               placeholder={field.enum[0] || ''}
               defaultValue={defaultValue || field.enum[0]}
-              children={ _.map(field.enum, function(val, i) {
-                  return (
-                    <option value={val} key={i}>
-                      {val}
-                    </option>
-                  );
-                })
-              }
+              enum={field.enum}
               validators={validatorFuncs}
               onChange={onChange}
               isRequired={field.isRequired}

@@ -17,7 +17,7 @@ const FlatField = React.createClass({
     formGenerator: React.PropTypes.object.isRequired,
     label: React.PropTypes.oneOfType(flatTypes),
     placeholder: React.PropTypes.oneOfType(flatTypes),
-    children: React.PropTypes.array,
+    enum: React.PropTypes.array,
     defaultValue: React.PropTypes.any,
     validators: React.PropTypes.arrayOf(React.PropTypes.func),
     onChange: React.PropTypes.func,
@@ -33,7 +33,7 @@ const FlatField = React.createClass({
       type: 'text',
       label: '',
       placeholder: '',
-      children: [],
+      enum: [],
       validators: [],
       onChange: function() {},
       defaultValue: '',
@@ -120,11 +120,10 @@ const FlatField = React.createClass({
   },
 
   render: function() {
-    const TextInput = this.props.formGenerator.inputs.TextInput;
-
-    const errorClass = this.state.errorMessages.length
-      ? ' has-error'
-      : '';
+    const inputs = this.props.formGenerator.inputs;
+    const TextInput = inputs.TextInput;
+    const BoolInput = inputs.BoolInput;
+    const EnumInput = inputs.EnumInput;
 
     return (function(that) {
       switch (that.props.type) {
@@ -137,32 +136,30 @@ const FlatField = React.createClass({
             placeholder={that.props.placeholder}
             value={that.state.value}
             onChange={that.onChange}
-            id={that.props.id}
-            key={that.props.id}/>
+            key={that.props.id}
+            id={that.props.id}/>
         );
         case 'checkbox': return (
-          <FormControl
-            type={that.props.type}
-            key={that.props.id}
+          <BoolInput
+            errors={that.state.errorMessages}
             label={that.props.label}
             placeholder={that.props.placeholder}
             onChange={that.onChange}
-            checked={that.getValue()}/>
+            value={that.getValue()}
+            key={that.props.id}
+            id={that.props.id}/>
         );
         case 'select':
         return (
-          <FormGroup key={that.props.id}>
-            <ControlLabel>
-              {that.props.label}
-            </ControlLabel>
-            <FormControl
-              componentClass='select'
-              placeholder={that.props.placeholder}
-              onChange={that.onChange}
-              value={that.state.value}>
-              {that.props.children}
-            </FormControl>
-          </FormGroup>
+          <EnumInput
+            enum={that.props.enum}
+            errors={that.state.errorMessages}
+            label={that.props.label}
+            placeholder={that.props.placeholder}
+            onChange={that.onChange}
+            value={that.state.value}
+            key={that.props.id}
+            id={that.props.id}/>
         );
         case 'hidden': return <span key={that.props.id}/>;
         case 'date': throw 'Unimplemented';
