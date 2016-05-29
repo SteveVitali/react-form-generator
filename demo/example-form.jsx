@@ -1,16 +1,22 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import FormGenerator from '../src/FormGenerator.jsx'
+import VanillaTextInput from '../src/input-components/VanillaTextInput.jsx'
 
-var Example = React.createClass({
+// Create instance of FormGenerator with particular inputs
+const formGenerator = new FormGenerator({
+  TextInput: VanillaTextInput
+});
+
+const Example = React.createClass({
   schema: {
     stringField: {
       type: String,
       label: 'String Field',
       defaultValue: 'Welp',
       validators: [
-          FormGenerator.validators.minLength(1),
-          FormGenerator.validators.maxLength(10),
+          formGenerator.validators.minLength(1),
+          formGenerator.validators.maxLength(10),
           (val) => {
             if (val.toLowerCase().indexOf('welp') === -1) {
               return 'Error: input must contain "welp"';
@@ -137,10 +143,11 @@ var Example = React.createClass({
   },
 
   render: function() {
-    const schema = this.schema;
-    const ref = 'myFormRef';
-    const formElement = FormGenerator.create(schema, ref, this.onSubmit);
-
+    const formElement = formGenerator.create({
+      schema: this.schema,
+      ref: 'myFormRef',
+      onSubmit: this.onSubmit
+    });
     return <span>{formElement}</span>;
   }
 });

@@ -23,9 +23,14 @@ open http://localhost:3000
 ```
 
 ### Usage
-To instantiate a FormGeneratorForm component, use `FormGenerator.create`:
+First, instantiate a FormGenerator instance as follows:
 ```js
-FormGenerator.create(<formSchema>, <ref>, <onSubmit>);
+const formGenerator = new FormGenerator(<inputsMap>);
+- `inputsMap` is an object mapping input component types to input component implementations. E.g. `inputsMap.TextInput` could equal some component that implements the TextInput interface (see `src/input-components` for examples of this).
+```
+Next, to instantiate an actual FormGeneratorForm component, use `formGenerator.create`:
+```js
+const formComponent = formGenerator.create(<formSchema>, <ref>, <onSubmit>);
 ```
 - `formSchema` is a JSON schema for the form
 - `ref` is the ref-string for the FormGeneratorForm
@@ -79,16 +84,21 @@ Here is a list of currently built-in validator-generators, located in the `FormG
 
 ### Example
 ```js
-var Example = React.createClass({
+const formGenerator = new FormGenerator({
+  TextInput: SomeTextInput,
+  // ...
+});
+
+const Example = React.createClass({
   schema: {
     stringField: {
       type: String,
       label: 'String Field',
       defaultValue: 'Welp',
       validators: [
-          FormGenerator.validators.minLength(1),
-          FormGenerator.validators.maxLength(10),
-          function(val) {
+          formGenerator.validators.minLength(1),
+          formGenerator.validators.maxLength(10),
+          (val) => {
             if (val.toLowerCase().indexOf('welp') === -1) {
               return 'Error: input must contain "welp"';
             }
@@ -96,15 +106,26 @@ var Example = React.createClass({
       ],
       isRequired: true
     },
+    passwordField: {
+      type: String,
+      label: 'Password Field',
+      isPassword: true,
+      isRequired: true
+    },
     numberField: {
       type: Number,
       label: 'Number Field',
-      validate: function(val) {
+      validate: (val) => {
         if (val % 10 !== 0) {
           return 'Error: input must be divisible by 10';
         }
       }
     },
+    // Date fields not implemented
+    // dateField: {
+    //   type: Date,
+    //   label: 'Date Field'
+    // },
     enumField: {
       type: String,
       enum: ['', 'option 1', 'option 2'],
@@ -204,11 +225,11 @@ var Example = React.createClass({
   },
 
   render: function() {
-    var schema = this.schema;
-    var ref = 'myFormRef';
-    var onSubmit = this.onSubmit;
-    var formElement = FormGenerator.create(schema, ref, onSubmit);
-
+    const formElement = formGenerator.create({
+      schema: this.schema,
+      ref: 'myFormRef',
+      onSubmit: this.onSubmit
+    });
     return <span>{formElement}</span>;
   }
 });
