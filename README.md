@@ -75,7 +75,7 @@ Note how in the last three type examples, we define `FormField`'s recursively as
 
 #### `FormField` Validators
 
-Here is a list of currently built-in validator-generators, located in the `FormGenerator.validators` object. Each one returns a validator function that takes in a field's current value at the time of invokation and returns an error message (which is then rendered in the form view) if some predicate test fails.
+Here is a list of currently built-in validator-generators, located in the `formGenerator.validators` object. Each one returns a validator function that takes in a field's current value at the time of invokation and returns an error message (which is then rendered in the form view) if some predicate test fails.
 - `lengthEquals(len)`: validates that length equals `len`
 - `minLength(len)`: validates length is at least `len`
 - `maxLength(len)`: validates length is at most `len`
