@@ -47,6 +47,6 @@ var validators = {
         : null;
     };
   }
-}
+};
 
 export default validators

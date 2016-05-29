@@ -1,10 +1,10 @@
 import _ from 'underscore'
 import React from 'react'
 import { Panel } from 'react-bootstrap'
-import FormGenerator from './FormGenerator.jsx'
 
 const ObjectField = React.createClass({
   propTypes: {
+    formGenerator: React.PropTypes.object.isRequired,
     schema: React.PropTypes.object.isRequired,
     onChange: React.PropTypes.func.isRequired,
     label: React.PropTypes.string,
@@ -61,7 +61,7 @@ const ObjectField = React.createClass({
   },
 
   render: function() {
-    const subFields = FormGenerator.generate(
+    const subFields = this.props.formGenerator.generate(
       this.props.schema,
       this.props.defaultValue,
       this.props.onChange,

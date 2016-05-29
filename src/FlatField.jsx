@@ -1,7 +1,8 @@
 import _ from 'underscore'
 import React from 'react'
 import { FormControl, FormGroup, ControlLabel } from 'react-bootstrap'
-import FormGenerator from './FormGenerator.jsx'
+import validators from './validators.js'
+import DefaultTextInput from './input-components/DefaultTextInput.jsx'
 
 const flatTypes = [
   React.PropTypes.string,
@@ -60,19 +61,19 @@ const FlatField = React.createClass({
   },
 
   validate: function(value) {
-    let validators = this.props.validators;
+    let validatorFuncs = this.props.validators;
     // If required, add the nonEmpty validator
-    validators = this.props.isRequired
-      ? validators.concat([FormGenerator.validators.nonEmpty()])
-      : validators;
+    validatorFuncs = this.props.isRequired
+      ? validatorFuncs.concat([validators.nonEmpty()])
+      : validatorFuncs;
 
     // If type Number, add the number validator
-    validators = this.props.isNumerical
-      ? validators.concat([FormGenerator.validators.number()])
-      : validators;
+    validatorFuncs = this.props.isNumerical
+      ? validatorFuncs.concat([validators.number()])
+      : validatorFuncs;
 
     return _.compact(
-      _.map(validators, function(validate) {
+      _.map(validatorFuncs, function(validate) {
         return validate(value);
       })
     );
@@ -126,24 +127,15 @@ const FlatField = React.createClass({
       switch (that.props.type) {
         case 'text':
         case 'password': return (
-          <div className={'form-group' + errorClass} key={that.props.id}>
-            <label className='control-label'>
-              {that.props.label}
-            </label>
-            <input className={'form-control'}
-              type={that.props.type}
-              label={that.props.label}
-              placeholder={that.props.placeholder}
-              onChange={that.onChange}
-              value={that.state.value}/>
-            { _.map(that.state.errorMessages, function(msg, i) {
-                return (
-                  <span className='help-block' key={i}>
-                    {msg}
-                  </span>
-                );
-            })}
-          </div>
+          <DefaultTextInput
+            type={that.props.type}
+            errors={that.state.errorMessages}
+            label={that.props.label}
+            placeholder={that.props.placeholder}
+            value={that.state.value}
+            onChange={that.onChange}
+            id={that.props.id}
+            key={that.props.id}/>
         );
         case 'checkbox': return (
           <FormControl

@@ -1,10 +1,10 @@
 import _ from 'underscore'
 import React from 'react'
 import { Button, Panel } from 'react-bootstrap'
-import FormGenerator from './FormGenerator.jsx'
 
 const ArrayField = React.createClass({
   propTypes: {
+    formGenerator: React.PropTypes.object.isRequired,
     schema: React.PropTypes.oneOfType([
       React.PropTypes.func,
       React.PropTypes.object,
@@ -113,7 +113,7 @@ const ArrayField = React.createClass({
           defaultValue: defaultVal
         };
         arrayFields.push(
-          FormGenerator.generateFlatField(
+          this.props.formGenerator.generateFlatField(
             fieldRef, mockSchema, defaultVal, onChange, validateOnSubmit, i
           )
         );
@@ -125,7 +125,7 @@ const ArrayField = React.createClass({
           defaultValue: defaultVal
         };
         arrayFields.push(
-          FormGenerator.generate(
+          this.props.formGenerator.generate(
             schemaWrapper, defaultVal, onChange, validateOnSubmit, i
           )
         );

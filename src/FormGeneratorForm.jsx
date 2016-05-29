@@ -4,6 +4,7 @@ import ObjectField from './ObjectField.jsx'
 
 const FormGeneratorForm = React.createClass({
   propTypes: {
+    formGenerator: React.PropTypes.object.isRequired,
     schema: React.PropTypes.object.isRequired,
     onSubmit: React.PropTypes.func,
     defaultValue: React.PropTypes.object,
@@ -71,6 +72,7 @@ const FormGeneratorForm = React.createClass({
     return (
       <form>
         <ObjectField ref='toplevelForm'
+          formGenerator={this.props.formGenerator}
           schema={this.props.schema}
           defaultValue={this.props.defaultValue}
           label={this.props.label}
