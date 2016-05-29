@@ -6,6 +6,7 @@ import DefaultTextInput from '../src/input-components/DefaultTextInput.jsx'
 // Create instance of FormGenerator with particular inputs
 const formGenerator = new FormGenerator({
   TextInput: DefaultTextInput
+  // ... ArrayInput, ObjectInput, BoolInput, EnumInput
 });
 
 const Example = React.createClass({
