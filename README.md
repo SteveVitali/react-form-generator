@@ -26,8 +26,9 @@ open http://localhost:3000
 First, instantiate a FormGenerator instance as follows:
 ```js
 const formGenerator = new FormGenerator(<inputsMap>);
-- `inputsMap` is an object mapping input component types to input component implementations. E.g. `inputsMap.TextInput` could equal some component that implements the TextInput interface (see `src/input-components` for examples of this).
 ```
+- `inputsMap` is an object mapping input component types to input component implementations. E.g. `inputsMap.TextInput` could equal some component that implements the `TextInput` interface (see `src/input-components` for examples of this).
+
 Next, to instantiate an actual FormGeneratorForm component, use `formGenerator.create`:
 ```js
 const formComponent = formGenerator.create(<formSchema>, <ref>, <onSubmit>);
