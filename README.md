@@ -13,7 +13,7 @@ Generate, validate, and parse React forms based on arbitrary JSON schemas.
 Or download from this repo and use globally (FormGenerator) or with RequireJS
 
 ### Demo
-To run the demo app, navigate to `/demos/browserify` and run:
+To run the demo app, navigate to `/demo` and run:
 ```
 npm install
 npm start
